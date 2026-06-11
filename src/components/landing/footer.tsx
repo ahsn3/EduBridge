@@ -13,7 +13,7 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <Logo variant="icon" showName imageClassName="h-8 w-8" nameClassName="text-lg" />
+            <Logo variant="icon" showName imageClassName="h-8 w-8" nameClassName="text-lg" className="gap-2" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               {t.footer.description}
             </p>

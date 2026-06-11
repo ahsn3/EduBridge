@@ -13,6 +13,8 @@ export const BRAND = {
   ogImage: "/og-image.jpg",
 } as const;
 
+const PRODUCTION_FALLBACK_URL = "https://web-production-c82f6.up.railway.app";
+
 export function getSiteUrl(): string {
   const fromEnv =
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -25,10 +27,15 @@ export function getSiteUrl(): string {
     return fromEnv.replace(/\/$/, "");
   }
 
+  if (process.env.NODE_ENV === "production") {
+    return PRODUCTION_FALLBACK_URL;
+  }
+
   return "http://localhost:3000";
 }
 
-export function getAbsoluteUrl(path: string): string {
+export function getAbsoluteUrl(path: string, baseUrl?: string): string {
+  const base = (baseUrl ?? getSiteUrl()).replace(/\/$/, "");
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${getSiteUrl()}${normalized}`;
+  return `${base}${normalized}`;
 }

@@ -80,12 +80,12 @@ export function DashboardSidebar({
         )}
       >
         {collapsed ? (
-          <Logo variant="icon" imageClassName="h-8 w-8" />
+          <Logo variant="icon" imageClassName="!h-8 !w-8" href="/" />
         ) : (
           <Logo
             variant="icon"
             showName
-            imageClassName="h-8 w-8"
+            imageClassName="!h-8 !w-8"
             nameClassName="text-lg"
           />
         )}

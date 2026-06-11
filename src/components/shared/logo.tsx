@@ -13,8 +13,7 @@ const variantConfig: Record<
     src: BRAND.logo,
     width: 40,
     height: 40,
-    className:
-      "h-9 w-9 rounded-full object-cover ring-2 ring-primary/15 shadow-md",
+    className: "object-cover",
   },
   name: {
     src: BRAND.logoName,
@@ -51,8 +50,24 @@ export function Logo({
 }: LogoProps) {
   const config = variantConfig[variant];
 
-  const content = (
-    <>
+  const image =
+    variant === "icon" ? (
+      <span
+        className={cn(
+          "relative inline-flex h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/20 shadow-md bg-background",
+          imageClassName
+        )}
+      >
+        <Image
+          src={config.src}
+          alt={SITE_NAME}
+          fill
+          sizes="36px"
+          className={config.className}
+          priority={priority}
+        />
+      </span>
+    ) : (
       <Image
         src={config.src}
         alt={SITE_NAME}
@@ -61,6 +76,11 @@ export function Logo({
         className={cn(config.className, imageClassName)}
         priority={priority}
       />
+    );
+
+  const content = (
+    <>
+      {image}
       {showName && (
         <span className={cn("font-bold text-xl text-foreground", nameClassName)}>
           {SITE_NAME}
@@ -69,23 +89,22 @@ export function Logo({
     </>
   );
 
+  const wrapperClass = cn(
+    "inline-flex items-center shrink-0",
+    (showName || variant === "icon") && "gap-2.5",
+    className
+  );
+
   if (!href) {
     return (
-      <div className={cn("inline-flex items-center", showName && "gap-2.5", className)}>
+      <div dir="ltr" className={wrapperClass}>
         {content}
       </div>
     );
   }
 
   return (
-    <Link
-      href={href}
-      className={cn(
-        "inline-flex items-center shrink-0",
-        showName && "gap-2.5",
-        className
-      )}
-    >
+    <Link href={href} dir="ltr" className={wrapperClass}>
       {content}
     </Link>
   );

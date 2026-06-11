@@ -7,8 +7,8 @@ import {
   SITE_DESCRIPTION_AR,
   SITE_NAME,
   getAbsoluteUrl,
-  getSiteUrl,
 } from "@/lib/site-config";
+import { getRequestSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,9 +21,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = getSiteUrl();
-  const ogImage = getAbsoluteUrl(BRAND.ogImage);
+  const siteUrl = await getRequestSiteUrl();
+  const ogImage = getAbsoluteUrl(BRAND.ogImage, siteUrl);
+  const openGraphImage = getAbsoluteUrl("/opengraph-image.jpg", siteUrl);
 
   return {
     metadataBase: new URL(siteUrl),
@@ -46,14 +49,14 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: SITE_NAME,
     publisher: SITE_NAME,
     icons: {
-      icon: BRAND.logo,
+      icon: [{ url: BRAND.logo }, { url: "/icon.jpg", type: "image/jpeg" }],
       shortcut: BRAND.logo,
-      apple: BRAND.logo,
+      apple: [{ url: "/apple-icon.jpg", type: "image/jpeg" }],
     },
     openGraph: {
       type: "website",
-      locale: "ar_TR",
-      alternateLocale: ["en_US"],
+      locale: "en_US",
+      alternateLocale: ["ar_TR"],
       url: siteUrl,
       siteName: SITE_NAME,
       title: `${SITE_NAME} | Professional Education for Arab Students`,
@@ -67,17 +70,26 @@ export async function generateMetadata(): Promise<Metadata> {
           alt: SITE_NAME,
           type: "image/jpeg",
         },
+        {
+          url: openGraphImage,
+          secureUrl: openGraphImage,
+          width: 1024,
+          height: 1024,
+          alt: SITE_NAME,
+          type: "image/jpeg",
+        },
       ],
     },
     twitter: {
       card: "summary_large_image",
       title: SITE_NAME,
       description: SITE_DESCRIPTION,
-      images: [ogImage],
+      images: [ogImage, openGraphImage],
     },
     other: {
       "og:image": ogImage,
       "og:image:secure_url": ogImage,
+      "og:image:url": ogImage,
       "og:image:width": "1024",
       "og:image:height": "1024",
       "og:image:type": "image/jpeg",
