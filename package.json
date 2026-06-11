@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
-    "start": "next start",
-    "start:prod": "prisma migrate deploy && next start",
+    "start": "next start --hostname 0.0.0.0 --port ${PORT:-3000}",
+    "start:prod": "sh scripts/railway-start.sh",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

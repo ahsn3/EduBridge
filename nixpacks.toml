@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_20", "openssl"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["npm install", "chmod +x scripts/railway-start.sh"]
 
 [phases.build]
 cmds = ["npm run db:generate", "npm run build"]
@@ -12,4 +12,5 @@ cmd = "npm run start:prod"
 
 [variables]
 NIXPACKS_NODE_VERSION = "20"
+HOSTNAME = "0.0.0.0"
 HOME = "/tmp"
