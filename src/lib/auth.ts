@@ -3,8 +3,14 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import type { Role } from "@prisma/client";
+import {
+  AUTH_INTENT_COOKIE,
+  getDashboardPath,
+  type AuthIntent,
+} from "@/lib/auth-utils";
+import type { AccountStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -13,6 +19,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       role: Role;
+      status: AccountStatus;
       avatar?: string | null;
       locale: string;
     };
@@ -20,6 +27,7 @@ declare module "next-auth" {
 
   interface User {
     role: Role;
+    status: AccountStatus;
     locale: string;
   }
 }
@@ -28,8 +36,38 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    status: AccountStatus;
     locale: string;
   }
+}
+
+async function getAuthIntent(): Promise<AuthIntent> {
+  try {
+    const cookieStore = await cookies();
+    const intent = cookieStore.get(AUTH_INTENT_COOKIE)?.value;
+    if (intent === "student" || intent === "instructor" || intent === "login") {
+      return intent;
+    }
+  } catch {
+    // cookies unavailable outside request
+  }
+  return "login";
+}
+
+async function clearAuthIntent() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(AUTH_INTENT_COOKIE);
+  } catch {
+    // ignore
+  }
+}
+
+async function loadUserAuthFields(userId: string) {
+  return db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, status: true, locale: true, name: true, email: true },
+  });
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -37,7 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
-    newUser: "/register",
+    newUser: "/register/student",
   },
   providers: [
     Google({
@@ -64,6 +102,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        if (user.status === "INACTIVE") {
+          return null;
+        }
+
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.password
@@ -78,6 +120,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          status: user.status,
           avatar: user.avatar,
           locale: user.locale,
         };
@@ -85,11 +128,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "google" || !user.email) {
+        return true;
+      }
+
+      const existing = await db.user.findUnique({
+        where: { email: user.email },
+      });
+
+      if (existing?.status === "INACTIVE") {
+        return false;
+      }
+
+      await clearAuthIntent();
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
-      if (user) {
-        token.id = user.id!;
-        token.role = user.role;
-        token.locale = user.locale;
+      if (user?.id) {
+        const dbUser = await loadUserAuthFields(user.id);
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.status = dbUser.status;
+          token.locale = dbUser.locale;
+        }
+      } else if (token.id) {
+        const dbUser = await loadUserAuthFields(token.id);
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.status = dbUser.status;
+          token.locale = dbUser.locale;
+        }
       }
 
       if (trigger === "update" && session) {
@@ -103,9 +173,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.status = token.status;
         session.user.locale = token.locale;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return `${baseUrl}/auth/redirect`;
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      const intent = await getAuthIntent();
+      const isInstructorSignup = intent === "instructor";
+
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          role: isInstructorSignup ? "INSTRUCTOR" : "STUDENT",
+          status: isInstructorSignup ? "PENDING" : "ACTIVE",
+          nameAr: user.name,
+          nameEn: user.name,
+        },
+      });
+
+      await clearAuthIntent();
     },
   },
 });
@@ -121,6 +215,7 @@ export async function getCurrentUser() {
       name: true,
       email: true,
       role: true,
+      status: true,
       avatar: true,
       locale: true,
       phone: true,
@@ -139,6 +234,11 @@ export function requireRole(allowedRoles: Role[]) {
     if (!user || !allowedRoles.includes(user.role)) {
       return null;
     }
+    if (user.status === "INACTIVE") {
+      return null;
+    }
     return user;
   };
 }
+
+export { getDashboardPath };

@@ -1,121 +1,52 @@
-"use client";
-
-import { useState } from "react";
+import { auth } from "@/lib/auth";
+import { getDashboardPath } from "@/lib/auth-utils";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { GraduationCap, UserCog } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useLocale } from "@/hooks/use-locale";
-import { registerUser } from "@/actions/auth";
-import { toast } from "sonner";
 
-export default function RegisterPage() {
-  const { t, locale } = useLocale();
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState("STUDENT");
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    formData.set("role", role);
-
-    const result = await registerUser(formData);
-
-    if (result.error) {
-      toast.error(result.error);
-      setLoading(false);
-      return;
-    }
-
-    toast.success(t.common.success);
-    router.push(role === "INSTRUCTOR" ? "/instructor" : "/student");
-    router.refresh();
+export default async function RegisterHubPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect(getDashboardPath(session.user.role, session.user.status));
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center space-y-2">
           <Logo variant="full" className="justify-center mb-2" />
-          <CardTitle className="text-2xl">{t.auth.registerTitle}</CardTitle>
-          <CardDescription>{t.common.tagline}</CardDescription>
+          <CardTitle className="text-2xl">Create your EduBridge account</CardTitle>
+          <CardDescription>Choose how you want to join the platform</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t.auth.name}</Label>
-              <Input id="name" name="name" required />
+        <CardContent className="grid sm:grid-cols-2 gap-4">
+          <Link href="/register/student" className="block">
+            <div className="rounded-2xl border p-6 h-full hover:border-primary hover:shadow-md transition-all text-center space-y-3">
+              <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold">Student</h3>
+              <p className="text-sm text-muted-foreground">
+                Enroll in courses, join live sessions, and track your progress.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.auth.email}</Label>
-              <Input id="email" name="email" type="email" required />
+          </Link>
+          <Link href="/register/instructor" className="block">
+            <div className="rounded-2xl border p-6 h-full hover:border-primary hover:shadow-md transition-all text-center space-y-3">
+              <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <UserCog className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold">Instructor</h3>
+              <p className="text-sm text-muted-foreground">
+                Teach courses after admin approval. Requires activation.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t.auth.password}</Label>
-              <Input id="password" name="password" type="password" required minLength={6} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t.auth.confirmPassword}</Label>
-              <Input id="confirmPassword" name="confirmPassword" type="password" required />
-            </div>
-            <div className="space-y-2">
-              <Label>{t.auth.role}</Label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="STUDENT">{t.auth.student}</SelectItem>
-                  <SelectItem value="INSTRUCTOR">{t.auth.instructor}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="referralCode">
-                {locale === "ar" ? "كود الإحالة (اختياري)" : "Referral Code (optional)"}
-              </Label>
-              <Input id="referralCode" name="referralCode" />
-            </div>
-            <Button type="submit" className="w-full gradient-primary border-0" disabled={loading}>
-              {loading ? t.common.loading : t.nav.register}
-            </Button>
-          </form>
-
-          <div className="relative">
-            <Separator />
-            <span className="absolute start-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-              {t.auth.orContinueWith}
-            </span>
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => signIn("google", { callbackUrl: "/student" })}
-          >
-            {t.auth.google}
+          </Link>
+          <Button asChild variant="ghost" className="sm:col-span-2">
+            <Link href="/login">Already have an account? Sign in</Link>
           </Button>
-
-          <p className="text-center text-sm text-muted-foreground">
-            {t.auth.hasAccount}{" "}
-            <Link href="/login" className="text-primary font-medium hover:underline">
-              {t.nav.login}
-            </Link>
-          </p>
         </CardContent>
       </Card>
     </div>

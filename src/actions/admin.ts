@@ -3,10 +3,11 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import type { AccountStatus } from "@prisma/client";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return null;
+  if (!user || user.role !== "ADMIN" || user.status !== "ACTIVE") return null;
   return user;
 }
 
@@ -17,13 +18,15 @@ export async function getAdminDashboard() {
   const [
     totalStudents,
     totalInstructors,
+    pendingInstructors,
     totalCourses,
     payments,
     recentEnrollments,
     popularCourses,
   ] = await Promise.all([
-    db.user.count({ where: { role: "STUDENT" } }),
-    db.user.count({ where: { role: "INSTRUCTOR" } }),
+    db.user.count({ where: { role: "STUDENT", status: "ACTIVE" } }),
+    db.user.count({ where: { role: "INSTRUCTOR", status: "ACTIVE" } }),
+    db.user.count({ where: { role: "INSTRUCTOR", status: "PENDING" } }),
     db.course.count(),
     db.payment.findMany({
       where: { paymentStatus: "COMPLETED" },
@@ -52,6 +55,7 @@ export async function getAdminDashboard() {
   return {
     totalStudents,
     totalInstructors,
+    pendingInstructors,
     totalCourses,
     totalRevenue,
     recentEnrollments,
@@ -70,12 +74,44 @@ export async function getUsers(role?: "STUDENT" | "INSTRUCTOR" | "ADMIN") {
       name: true,
       email: true,
       role: true,
+      status: true,
       avatar: true,
       createdAt: true,
       _count: { select: { enrollments: true, courses: true } },
     },
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function updateUserStatus(userId: string, status: AccountStatus) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target || target.role === "ADMIN") {
+    return { error: "Cannot modify this account" };
+  }
+
+  await db.user.update({ where: { id: userId }, data: { status } });
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/instructors");
+  return { success: true };
+}
+
+export async function approveInstructor(userId: string) {
+  return updateUserStatus(userId, "ACTIVE");
+}
+
+export async function rejectInstructor(userId: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  await db.user.update({
+    where: { id: userId },
+    data: { status: "INACTIVE", role: "STUDENT" },
+  });
+  revalidatePath("/admin/instructors");
+  return { success: true };
 }
 
 export async function updateUserRole(userId: string, role: "STUDENT" | "INSTRUCTOR" | "ADMIN") {

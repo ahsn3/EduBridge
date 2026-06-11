@@ -18,11 +18,11 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="إجمالي الطلاب" value={data.totalStudents} icon={Users} />
-        <StatCard title="إجمالي المدربين" value={data.totalInstructors} icon={GraduationCap} />
-        <StatCard title="إجمالي الدورات" value={data.totalCourses} icon={BookOpen} />
+        <StatCard title="Total Students" value={data.totalStudents} icon={Users} />
+        <StatCard title="Active Instructors" value={data.totalInstructors} icon={GraduationCap} />
+        <StatCard title="Pending Instructors" value={data.pendingInstructors} icon={GraduationCap} />
         <StatCard
-          title="إجمالي الإيرادات"
+          title="Total Revenue"
           value={formatPrice(data.totalRevenue)}
           icon={DollarSign}
         />

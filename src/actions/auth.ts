@@ -1,20 +1,33 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations";
 import { generateReferralCode } from "@/lib/utils";
 import { signIn } from "@/lib/auth";
+import { AUTH_INTENT_COOKIE } from "@/lib/auth-utils";
 import { AuthError } from "next-auth";
 
-export async function registerUser(formData: FormData) {
+export async function registerStudent(formData: FormData) {
+  return registerUser(formData, "STUDENT");
+}
+
+export async function registerInstructor(formData: FormData) {
+  return registerUser(formData, "INSTRUCTOR");
+}
+
+async function registerUser(
+  formData: FormData,
+  role: "STUDENT" | "INSTRUCTOR"
+) {
   try {
     const raw = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       confirmPassword: formData.get("confirmPassword") as string,
-      role: (formData.get("role") as "STUDENT" | "INSTRUCTOR") || "STUDENT",
+      role,
       referralCode: (formData.get("referralCode") as string) || undefined,
     };
 
@@ -47,6 +60,7 @@ export async function registerUser(formData: FormData) {
         email: validated.email,
         password: hashedPassword,
         role: validated.role,
+        status: validated.role === "INSTRUCTOR" ? "PENDING" : "ACTIVE",
         referralCode,
         referredBy,
       },
@@ -58,7 +72,10 @@ export async function registerUser(formData: FormData) {
       redirect: false,
     });
 
-    return { success: true };
+    return {
+      success: true,
+      pending: validated.role === "INSTRUCTOR",
+    };
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Registration failed" };
@@ -73,6 +90,11 @@ export async function loginUser(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    const user = await db.user.findUnique({ where: { email } });
+    if (user?.status === "INACTIVE") {
+      return { error: "Account is deactivated. Contact admin." };
+    }
+
     await signIn("credentials", {
       email,
       password,
@@ -83,4 +105,13 @@ export async function loginUser(formData: FormData) {
   } catch {
     return { error: "Invalid email or password" };
   }
+}
+
+export async function setAuthIntent(intent: "login" | "student" | "instructor") {
+  const cookieStore = await cookies();
+  cookieStore.set(AUTH_INTENT_COOKIE, intent, {
+    path: "/",
+    maxAge: 300,
+    sameSite: "lax",
+  });
 }

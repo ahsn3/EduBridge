@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { BrandMark } from "@/components/shared/brand-mark";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useLocale } from "@/hooks/use-locale";
 import { NAV_LINKS } from "@/lib/constants";
+import { getDashboardPath } from "@/lib/auth-utils";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -17,12 +18,9 @@ export function Navbar() {
   const { data: session } = useSession();
   const { t } = useLocale();
 
-  const dashboardPath =
-    session?.user?.role === "ADMIN"
-      ? "/admin"
-      : session?.user?.role === "INSTRUCTOR"
-        ? "/instructor"
-        : "/student";
+  const dashboardPath = session?.user
+    ? getDashboardPath(session.user.role, session.user.status)
+    : "/student";
 
   const getNavLabel = (key: string) => {
     const nav = t.nav as Record<string, string>;
@@ -50,9 +48,19 @@ export function Navbar() {
           <LanguageSwitcher />
           <ThemeToggle />
           {session ? (
-            <Button asChild>
-              <Link href={dashboardPath}>{t.nav.dashboard}</Link>
-            </Button>
+            <>
+              <Button asChild>
+                <Link href={dashboardPath}>{t.nav.dashboard}</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => signOut({ callbackUrl: "/" })}
+                title={t.common.logout}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="ghost" asChild>
@@ -97,9 +105,18 @@ export function Navbar() {
             <ThemeToggle />
           </div>
           {session ? (
-            <Button asChild className="w-full">
-              <Link href={dashboardPath}>{t.nav.dashboard}</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild className="flex-1">
+                <Link href={dashboardPath}>{t.nav.dashboard}</Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                {t.common.logout}
+              </Button>
+            </div>
           ) : (
             <div className="flex gap-2">
               <Button variant="outline" asChild className="flex-1">

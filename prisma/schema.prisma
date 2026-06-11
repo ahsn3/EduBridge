@@ -13,6 +13,12 @@ enum Role {
   ADMIN
 }
 
+enum AccountStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
 enum EnrollmentStatus {
   PENDING
   ACTIVE
@@ -49,7 +55,8 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   password      String?
-  role          Role      @default(STUDENT)
+  role          Role           @default(STUDENT)
+  status        AccountStatus  @default(ACTIVE)
   avatar        String?
   phone         String?
   bio           String?
