@@ -34,7 +34,7 @@ export default function LoginPage() {
 
     const res = await fetch("/api/auth/session");
     const session = await res.json();
-    const path = getDashboardPath(session?.user?.role, session?.user?.status);
+    const path = getDashboardPath(session?.user?.role ?? "STUDENT", session?.user?.status ?? "ACTIVE");
     router.push(path);
     router.refresh();
   }

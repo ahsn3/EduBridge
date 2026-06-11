@@ -6,7 +6,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const role = req.auth?.user?.role;
-  const status = req.auth?.user?.status;
+  const status = req.auth?.user?.status ?? "ACTIVE";
 
   const authRoutes = ["/login", "/register", "/register/student", "/register/instructor"];
   const isAuthRoute = authRoutes.includes(pathname);

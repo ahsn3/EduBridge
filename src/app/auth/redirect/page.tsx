@@ -17,7 +17,7 @@ export default function AuthRedirectPage() {
       return;
     }
 
-    const path = getDashboardPath(session.user.role, session.user.status);
+    const path = getDashboardPath(session.user.role, session.user.status ?? "ACTIVE");
     router.replace(path);
   }, [session, status, router]);
 

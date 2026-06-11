@@ -19,7 +19,7 @@ export function Navbar() {
   const { t } = useLocale();
 
   const dashboardPath = session?.user
-    ? getDashboardPath(session.user.role, session.user.status)
+    ? getDashboardPath(session.user.role, session.user.status ?? "ACTIVE")
     : "/student";
 
   const getNavLabel = (key: string) => {

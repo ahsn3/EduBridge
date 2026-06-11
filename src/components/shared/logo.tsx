@@ -32,7 +32,7 @@ const variantConfig: Record<
 interface LogoProps {
   variant?: LogoVariant;
   showName?: boolean;
-  href?: string;
+  href?: string | null;
   className?: string;
   imageClassName?: string;
   nameClassName?: string;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, GraduationCap, BookOpen, DollarSign } from "lucide-react";
+import { Users, GraduationCap, DollarSign } from "lucide-react";
 import { getAdminDashboard } from "@/actions/admin";
 import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
