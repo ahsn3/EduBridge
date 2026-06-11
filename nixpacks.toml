@@ -5,10 +5,11 @@ nixPkgs = ["nodejs_20", "openssl"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npx prisma generate", "npm run build"]
+cmds = ["npm run db:generate", "npm run build"]
 
 [start]
-cmd = "npx prisma migrate deploy && npm start"
+cmd = "npm run start:prod"
 
 [variables]
 NIXPACKS_NODE_VERSION = "20"
+HOME = "/tmp"
