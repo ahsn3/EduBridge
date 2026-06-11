@@ -10,8 +10,25 @@ export const BRAND = {
   logo: "/branding/logo.jpg",
   logoName: "/branding/logo-name.jpg",
   logoFull: "/branding/logo-full.jpg",
+  ogImage: "/og-image.jpg",
 } as const;
 
-export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+export function getSiteUrl(): string {
+  const fromEnv =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.AUTH_URL ||
+    (process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : undefined);
+
+  if (fromEnv) {
+    return fromEnv.replace(/\/$/, "");
+  }
+
+  return "http://localhost:3000";
+}
+
+export function getAbsoluteUrl(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${getSiteUrl()}${normalized}`;
 }

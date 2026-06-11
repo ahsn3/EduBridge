@@ -82,7 +82,12 @@ export function DashboardSidebar({
         {collapsed ? (
           <Logo variant="icon" imageClassName="h-8 w-8" />
         ) : (
-          <Logo variant="name" imageClassName="h-9" />
+          <Logo
+            variant="icon"
+            showName
+            imageClassName="h-8 w-8"
+            nameClassName="text-lg"
+          />
         )}
         <Button
           variant="ghost"

@@ -13,7 +13,8 @@ const variantConfig: Record<
     src: BRAND.logo,
     width: 40,
     height: 40,
-    className: "h-9 w-9 rounded-xl object-cover",
+    className:
+      "h-9 w-9 rounded-full object-cover ring-2 ring-primary/15 shadow-md",
   },
   name: {
     src: BRAND.logoName,
@@ -31,39 +32,61 @@ const variantConfig: Record<
 
 interface LogoProps {
   variant?: LogoVariant;
+  showName?: boolean;
   href?: string;
   className?: string;
   imageClassName?: string;
+  nameClassName?: string;
   priority?: boolean;
 }
 
 export function Logo({
   variant = "name",
+  showName = false,
   href = "/",
   className,
   imageClassName,
+  nameClassName,
   priority = false,
 }: LogoProps) {
   const config = variantConfig[variant];
 
-  const image = (
-    <Image
-      src={config.src}
-      alt={SITE_NAME}
-      width={config.width}
-      height={config.height}
-      className={cn(config.className, imageClassName)}
-      priority={priority}
-    />
+  const content = (
+    <>
+      <Image
+        src={config.src}
+        alt={SITE_NAME}
+        width={config.width}
+        height={config.height}
+        className={cn(config.className, imageClassName)}
+        priority={priority}
+      />
+      {showName && (
+        <span className={cn("font-bold text-xl text-foreground", nameClassName)}>
+          {SITE_NAME}
+        </span>
+      )}
+    </>
   );
 
   if (!href) {
-    return <div className={className}>{image}</div>;
+    return (
+      <div className={cn("inline-flex items-center", showName && "gap-2.5", className)}>
+        {content}
+      </div>
+    );
   }
 
   return (
-    <Link href={href} className={cn("inline-flex items-center shrink-0", className)}>
-      {image}
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center shrink-0",
+        showName && "gap-2.5",
+        className
+      )}
+    >
+      {content}
     </Link>
   );
 }
