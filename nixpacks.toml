@@ -2,15 +2,10 @@
 nixPkgs = ["nodejs_20", "openssl"]
 
 [phases.install]
-cmds = ["npm install", "chmod +x scripts/railway-start.sh"]
+cmds = ["npm install"]
 
 [phases.build]
 cmds = ["npm run db:generate", "npm run build"]
 
 [start]
-cmd = "npm run start:prod"
-
-[variables]
-NIXPACKS_NODE_VERSION = "20"
-HOSTNAME = "0.0.0.0"
-HOME = "/tmp"
+cmd = "./node_modules/.bin/next start --hostname 0.0.0.0 --port $PORT"

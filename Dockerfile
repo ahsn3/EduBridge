@@ -28,10 +28,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
-RUN chmod +x scripts/railway-start.sh
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
-CMD ["sh", "scripts/railway-start.sh"]
+# NO prisma commands here — only start the server
+CMD ["./node_modules/.bin/next", "start", "--hostname", "0.0.0.0", "--port", "3000"]
