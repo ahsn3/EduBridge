@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useLocale } from "@/hooks/use-locale";
 import { registerStudent } from "@/actions/auth";
-import { getDashboardPath } from "@/lib/auth-utils";
 
 export default function StudentRegisterPage() {
   const { t, locale } = useLocale();
