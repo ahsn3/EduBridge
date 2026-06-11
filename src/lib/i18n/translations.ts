@@ -3,7 +3,7 @@ export type Locale = "ar" | "en";
 export const translations = {
   ar: {
     common: {
-      appName: "إيدو بريدج",
+      appName: "EduBridge",
       tagline: "منصة تعليمية احترافية للطلاب العرب في تركيا",
       loading: "جاري التحميل...",
       save: "حفظ",
@@ -84,7 +84,7 @@ export const translations = {
       satisfaction: "رضا الطلاب",
     },
     features: {
-      title: "لماذا إيدو بريدج؟",
+      title: "لماذا EduBridge؟",
       subtitle: "كل ما تحتاجه لتحقيق التفوق الأكاديمي في مكان واحد",
       liveClasses: "حصص مباشرة",
       liveClassesDesc: "انضم لحصص Google Meet المباشرة مع تتبع الحضور التلقائي",

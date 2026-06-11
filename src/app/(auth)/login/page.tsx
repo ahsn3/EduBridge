@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/shared/logo";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,11 +50,7 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center justify-center gap-2 mb-2">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold">EB</span>
-            </div>
-          </Link>
+          <Logo variant="full" className="justify-center mb-2" />
           <CardTitle className="text-2xl">{t.auth.loginTitle}</CardTitle>
           <CardDescription>{t.common.tagline}</CardDescription>
         </CardHeader>

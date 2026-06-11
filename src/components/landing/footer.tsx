@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Logo } from "@/components/shared/logo";
 import { useLocale } from "@/hooks/use-locale";
 
 export function Footer() {
@@ -12,12 +13,7 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-xl gradient-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EB</span>
-              </div>
-              <span className="font-bold text-lg">{t.common.appName}</span>
-            </div>
+            <Logo variant="name" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               {t.footer.description}
             </p>

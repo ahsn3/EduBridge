@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/shared/logo";
 import {
   LayoutDashboard,
   BookOpen,
@@ -70,20 +71,24 @@ export function DashboardSidebar({
         isRtl ? "right-0" : "left-0"
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 border-b">
-        {!collapsed && (
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">EB</span>
-            </div>
-            <span className="font-bold text-lg">{t.common.appName}</span>
-          </Link>
+      <div
+        className={cn(
+          "border-b",
+          collapsed
+            ? "flex flex-col items-center gap-1 py-3 px-2"
+            : "flex h-16 items-center justify-between px-4"
+        )}
+      >
+        {collapsed ? (
+          <Logo variant="icon" imageClassName="h-8 w-8" />
+        ) : (
+          <Logo variant="name" imageClassName="h-9" />
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className={cn(collapsed && "mx-auto")}
+          className={cn(collapsed && "h-8 w-8")}
         >
           {collapsed ? (
             isRtl ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />

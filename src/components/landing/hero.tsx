@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ArrowRight, Users, Calendar, TrendingUp } from "lucide-react";
+import { BRAND } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/hooks/use-locale";
 
@@ -92,8 +94,15 @@ export function Hero() {
 
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-48 h-48 rounded-full gradient-primary opacity-20 blur-2xl" />
-                <div className="absolute w-32 h-32 rounded-2xl glass-card flex items-center justify-center">
-                  <span className="text-6xl font-bold gradient-text">EB</span>
+                <div className="absolute rounded-2xl glass-card p-4 flex items-center justify-center">
+                  <Image
+                    src={BRAND.logoFull}
+                    alt="EduBridge"
+                    width={240}
+                    height={120}
+                    className="h-28 w-auto object-contain"
+                    priority
+                  />
                 </div>
               </div>
             </div>
