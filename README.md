@@ -110,14 +110,26 @@ docker-compose exec app npm run db:seed
 
 1. Create a new project on [Railway](https://railway.app)
 2. Add a **PostgreSQL** service
-3. Add a **Web Service** from your GitHub repo
-4. Set environment variables:
-   - `DATABASE_URL` (from PostgreSQL service)
-   - `AUTH_SECRET`
-   - `AUTH_URL` (your Railway app URL)
-   - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` (optional)
-   - `NEXT_PUBLIC_APP_URL`
-5. Deploy — migrations run automatically via `Procfile`
+3. Add a **Web Service** from your GitHub repo (`ahsn3/EduBridge`)
+4. **Important:** In web service → **Settings** → **Deploy** → clear **Custom Start Command** (leave empty)
+5. Set environment variables on the **web** service:
+
+| Variable | Value |
+|----------|--------|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `AUTH_URL` | `https://your-app.up.railway.app` |
+| `NEXT_PUBLIC_APP_URL` | same as `AUTH_URL` |
+| `AUTH_TRUST_HOST` | `true` |
+
+6. Deploy (uses Dockerfile — builds with Docker, starts only `next start`)
+7. After deploy succeeds, open **Console** and run:
+
+```bash
+npm run railway:setup
+```
+
+This creates tables and seeds demo data.
 
 ## Project Structure
 
