@@ -34,5 +34,5 @@ RUN chmod +x scripts/railway-setup.sh
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
-# NO prisma commands here — only start the server
-CMD ["sh", "-c", "exec ./node_modules/.bin/next start --hostname 0.0.0.0 --port ${PORT:-3000}"]
+# npm run expands $PORT via shell — never pass literal $PORT to next CLI
+CMD ["npm", "run", "start:prod"]
