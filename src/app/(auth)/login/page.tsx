@@ -18,18 +18,21 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
-    await signOut({ redirect: false });
     const formData = new FormData(e.currentTarget);
-    const result = await loginUser(formData);
+    setLoading(true);
 
-    if (result.error) {
-      toast.error(result.error);
+    try {
+      const result = await loginUser(formData);
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      window.location.href = result.redirectTo || "/auth/redirect";
+    } finally {
       setLoading(false);
-      return;
     }
-
-    window.location.href = result.redirectTo || "/auth/redirect";
   }
 
   return (
