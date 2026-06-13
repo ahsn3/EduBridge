@@ -164,6 +164,9 @@ export const translations = {
       verifySuccess: "تم التحقق بنجاح!",
       verifySuccessLogin: "تم إنشاء حسابك. سجّل الدخول الآن.",
     },
+    contact: {
+      subtitle: "تواصل معنا عبر القنوات التالية",
+    },
     dashboard: {
       welcome: "مرحباً بك",
       overview: "نظرة عامة",
