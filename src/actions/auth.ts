@@ -94,6 +94,10 @@ async function startRegistration(formData: FormData, role: RegisterRole) {
 
     await sendOtpEmail({ email, passcode: code });
 
+    if (process.env.DEBUG_OTP === "true") {
+      console.log(`[DEBUG_OTP] ${email}: ${code}`);
+    }
+
     return {
       success: true,
       needsVerification: true,
@@ -105,8 +109,8 @@ async function startRegistration(formData: FormData, role: RegisterRole) {
     if (error instanceof Error && error.message === "EmailJS is not configured") {
       return { error: "Email service is not configured. Contact support." };
     }
-    if (error instanceof Error && error.message === "Failed to send verification email") {
-      return { error: "Could not send verification email. Try again." };
+    if (error instanceof Error && error.message.includes("Failed to send verification email")) {
+      return { error: "Could not send verification code. Check EmailJS settings or try again." };
     }
     return { error: "Something went wrong" };
   }
@@ -277,8 +281,12 @@ export async function loginUser(formData: FormData) {
       redirect: false,
     });
 
-    return { success: true };
-  } catch {
+    return {
+      success: true,
+      redirectTo: getDashboardPath(user.role, user.status),
+    };
+  } catch (error) {
+    console.error("Login error:", error);
     return { error: "Invalid email or password" };
   }
 }

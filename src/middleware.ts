@@ -20,6 +20,10 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(getDashboardPath(role, status), req.url));
   }
 
+  if (pathname.startsWith("/student") && isLoggedIn && role === "ADMIN") {
+    return NextResponse.redirect(new URL("/admin", req.url));
+  }
+
   if (pathname.startsWith("/student") && (!isLoggedIn || role !== "STUDENT" || status !== "ACTIVE")) {
     if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
     if (role === "ADMIN") return NextResponse.redirect(new URL("/admin", req.url));

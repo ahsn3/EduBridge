@@ -26,6 +26,9 @@ declare module "@auth/core/jwt" {
     role: Role;
     status: AccountStatus;
     locale: string;
+    name?: string | null;
+    email?: string | null;
+    picture?: string | null;
   }
 }
 

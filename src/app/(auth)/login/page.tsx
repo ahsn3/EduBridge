@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useLocale } from "@/hooks/use-locale";
 import { loginUser } from "@/actions/auth";
-import { getDashboardPath } from "@/lib/auth-utils";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -31,10 +30,7 @@ export default function LoginPage() {
       return;
     }
 
-    const res = await fetch("/api/auth/session");
-    const session = await res.json();
-    const path = getDashboardPath(session?.user?.role ?? "STUDENT", session?.user?.status ?? "ACTIVE");
-    router.push(path);
+    router.push(result.redirectTo || "/student");
     router.refresh();
   }
 

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Users, GraduationCap, DollarSign } from "lucide-react";
+import { Users, GraduationCap, DollarSign, BookOpen } from "lucide-react";
 import { getAdminDashboard } from "@/actions/admin";
 import { StatCard } from "@/components/shared/stat-card";
+import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatPrice, formatDateTime } from "@/lib/utils";
@@ -14,13 +15,16 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-        <p className="text-muted-foreground">نظرة عامة على المنصة</p>
+        <p className="text-muted-foreground">إدارة المنصة بالكامل — دورات، مدربين، طلاب، والصفحة الرئيسية</p>
       </div>
+
+      <AdminQuickActions />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Students" value={data.totalStudents} icon={Users} />
         <StatCard title="Active Instructors" value={data.totalInstructors} icon={GraduationCap} />
         <StatCard title="Pending Instructors" value={data.pendingInstructors} icon={GraduationCap} />
+        <StatCard title="Total Courses" value={data.totalCourses} icon={BookOpen} />
         <StatCard
           title="Total Revenue"
           value={formatPrice(data.totalRevenue)}
@@ -33,7 +37,7 @@ export default async function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">الدورات الأكثر شعبية</CardTitle>
             <Button size="sm" variant="ghost" asChild>
-              <Link href="/admin/analytics">التحليلات</Link>
+              <Link href="/admin/courses">إدارة الدورات</Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -53,8 +57,11 @@ export default async function AdminDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">آخر التسجيلات</CardTitle>
+            <Button size="sm" variant="ghost" asChild>
+              <Link href="/admin/enrollments">عرض الكل</Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {data.recentEnrollments.map((enrollment) => (

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Bell, Menu } from "lucide-react";
+import { Search, Bell, Menu, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -34,8 +35,27 @@ export function DashboardTopbar({
   settingsPath = "/student/settings",
 }: DashboardTopbarProps) {
   const { data: session } = useSession();
-  const { t, isRtl } = useLocale();
+  const { t, locale, isRtl } = useLocale();
   const [search, setSearch] = useState("");
+
+  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "";
+  const isAdmin = session?.user?.role === "ADMIN";
+  const isInstructor = session?.user?.role === "INSTRUCTOR";
+  const roleLabel = isAdmin
+    ? locale === "ar"
+      ? "مدير"
+      : "Administrator"
+    : isInstructor
+      ? locale === "ar"
+        ? "مدرب"
+        : "Instructor"
+      : locale === "ar"
+        ? "طالب"
+        : "Student";
+
+  const notificationsPath = settingsPath.includes("/settings")
+    ? settingsPath.replace("/settings", "/notifications")
+    : null;
 
   return (
     <header
@@ -43,7 +63,8 @@ export function DashboardTopbar({
         "fixed top-0 z-30 h-16 border-b bg-background/80 backdrop-blur-xl transition-all duration-300",
         sidebarCollapsed
           ? isRtl ? "right-[72px] left-0" : "left-[72px] right-0"
-          : isRtl ? "right-64 left-0" : "left-64 right-0"
+          : isRtl ? "right-64 left-0" : "left-64 right-0",
+        isAdmin && "border-b-primary/20 bg-gradient-to-r from-background via-background to-primary/5"
       )}
     >
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
@@ -71,32 +92,49 @@ export function DashboardTopbar({
           <LanguageSwitcher />
           <ThemeToggle />
 
-          <Button variant="ghost" size="icon" className="relative rounded-xl" asChild>
-            <Link href={settingsPath.replace("settings", "notifications")}>
-              <Bell className="h-4 w-4" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-0.5 -end-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] text-white flex items-center justify-center">
-                  {notificationCount > 9 ? "9+" : notificationCount}
-                </span>
-              )}
-            </Link>
-          </Button>
+          {notificationsPath && (
+            <Button variant="ghost" size="icon" className="relative rounded-xl" asChild>
+              <Link href={notificationsPath}>
+                <Bell className="h-4 w-4" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-0.5 -end-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] text-white flex items-center justify-center">
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 rounded-xl px-2">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="gap-2 rounded-xl px-2 max-w-[220px]">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/10">
                   <AvatarImage src={session?.user?.avatar || undefined} />
-                  <AvatarFallback>
-                    {getInitials(session?.user?.name || "U")}
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    {getInitials(userName || "U")}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:inline text-sm font-medium">
-                  {session?.user?.name}
-                </span>
+                <div className="hidden sm:flex flex-col items-start text-start min-w-0">
+                  <span className="text-sm font-semibold truncate max-w-[140px]">
+                    {userName}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    {isAdmin && <Shield className="h-3 w-3 text-primary" />}
+                    {roleLabel}
+                  </span>
+                </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-3 py-2 border-b mb-1">
+                <p className="font-semibold text-sm truncate">{userName}</p>
+                <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
+                {isAdmin && (
+                  <Badge variant="secondary" className="mt-2 text-[10px]">
+                    {roleLabel}
+                  </Badge>
+                )}
+              </div>
               <DropdownMenuItem asChild>
                 <Link href={settingsPath}>{t.common.profile}</Link>
               </DropdownMenuItem>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/components/shared/logo";
 import {
   LayoutDashboard,
@@ -20,10 +21,13 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Shield,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { signOut } from "next-auth/react";
 
 const iconMap = {
@@ -60,7 +64,22 @@ export function DashboardSidebar({
   onToggle,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { t, isRtl } = useLocale();
+  const { data: session } = useSession();
+  const { t, isRtl, locale } = useLocale();
+
+  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "";
+  const isAdmin = session?.user?.role === "ADMIN";
+  const roleLabel = isAdmin
+    ? locale === "ar"
+      ? "مدير النظام"
+      : "Administrator"
+    : session?.user?.role === "INSTRUCTOR"
+      ? locale === "ar"
+        ? "مدرب"
+        : "Instructor"
+      : locale === "ar"
+        ? "طالب"
+        : "Student";
 
   const getLabel = (labelKey: string) => {
     const nav = t.nav as Record<string, string>;
@@ -136,6 +155,31 @@ export function DashboardSidebar({
           );
         })}
       </nav>
+
+      {!collapsed && session?.user && (
+        <div className="px-3 py-3 border-t mx-3 mb-1 rounded-xl bg-muted/40">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/15">
+              <AvatarImage src={session.user.avatar || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                {getInitials(userName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate">{userName}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                {isAdmin && <Shield className="h-3 w-3 text-primary shrink-0" />}
+                <p className="text-[11px] text-muted-foreground truncate">{roleLabel}</p>
+              </div>
+            </div>
+          </div>
+          {isAdmin && (
+            <Badge className="mt-2 w-full justify-center text-[10px] gradient-primary border-0">
+              {locale === "ar" ? "لوحة الإدارة" : "Admin Panel"}
+            </Badge>
+          )}
+        </div>
+      )}
 
       <div className="p-3 border-t">
         <Button
