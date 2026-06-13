@@ -4,6 +4,8 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { getDashboardPath } from "@/lib/auth-utils";
+import { isAdminEmail } from "@/lib/admin-emails";
+import { ensureAdminUser } from "@/lib/ensure-admin-user";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 import type { JWT } from "@auth/core/jwt";
 
@@ -98,7 +100,8 @@ function applyDbUserToToken(token: JWT, dbUser: NonNullable<Awaited<ReturnType<t
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
-  session: { strategy: "jwt" },
+  trustHost: true,
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
     newUser: "/register/student",
@@ -116,6 +119,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const email = (credentials.email as string).toLowerCase().trim();
+
+        if (isAdminEmail(email)) {
+          await ensureAdminUser(email);
+        }
 
         const user = await db.user.findUnique({
           where: { email },
@@ -161,21 +168,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user?.id) {
-        const dbUser = await loadUserAuthFields(user.id);
-        if (dbUser) {
-          return applyDbUserToToken(token, dbUser);
-        }
+        const credUser = user as {
+          id: string;
+          name?: string | null;
+          email?: string | null;
+          role?: Role;
+          status?: AccountStatus;
+          locale?: string;
+          avatar?: string | null;
+        };
 
         return {
           ...token,
-          sub: user.id,
-          id: user.id,
-          name: user.name,
-          email: user.email ?? undefined,
-          picture: "avatar" in user && user.avatar ? (user.avatar as string) : undefined,
-          role: "role" in user ? (user.role as Role) : token.role,
-          status: "status" in user ? (user.status as AccountStatus) : token.status,
-          locale: "locale" in user ? (user.locale as string) : token.locale,
+          sub: credUser.id,
+          id: credUser.id,
+          role: credUser.role ?? "STUDENT",
+          status: credUser.status ?? "ACTIVE",
+          locale: credUser.locale ?? "ar",
+          name: credUser.name,
+          email: credUser.email ?? undefined,
+          picture: credUser.avatar ?? undefined,
+          instructorProfileCompleted: false,
+          instructorApprovalStatus: null,
+        };
+      }
+
+      if (isAdminEmail(typeof token.email === "string" ? token.email : undefined)) {
+        return {
+          ...token,
+          role: "ADMIN" as Role,
+          status: "ACTIVE" as AccountStatus,
         };
       }
 
@@ -200,7 +222,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.role = isAdminEmail(token.email)
+          ? "ADMIN"
+          : token.role;
         session.user.status = token.status;
         session.user.locale = token.locale;
         if (token.name) session.user.name = token.name;
@@ -224,6 +248,11 @@ export async function getCurrentUser() {
   if (!session?.user) return null;
 
   const email = session.user.email?.toLowerCase().trim();
+
+  if (isAdminEmail(email)) {
+    await ensureAdminUser(email!);
+  }
+
   const user = await db.user.findUnique({
     where: email ? { email } : { id: session.user.id },
     select: {

@@ -1,11 +1,14 @@
 import { auth } from "@/lib/auth";
 import { getDashboardPath, instructorNeedsProfile } from "@/lib/auth-routing";
+import { isAdminEmail } from "@/lib/admin-emails";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
-  const role = req.auth?.user?.role;
+  const email = req.auth?.user?.email;
+  const isAdmin = isAdminEmail(email) || req.auth?.user?.role === "ADMIN";
+  const role = isAdmin ? "ADMIN" : req.auth?.user?.role;
   const status = req.auth?.user?.status ?? "ACTIVE";
   const profileCompleted = req.auth?.user?.instructorProfileCompleted ?? false;
   const approvalStatus = req.auth?.user?.instructorApprovalStatus;
@@ -38,13 +41,13 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/pending-approval", req.url));
   }
 
-  if (pathname.startsWith("/student") && isLoggedIn && role === "ADMIN") {
+  if (pathname.startsWith("/student") && isLoggedIn && isAdmin) {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
   if (pathname.startsWith("/student") && (!isLoggedIn || role !== "STUDENT" || status !== "ACTIVE")) {
     if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
-    if (role === "ADMIN") return NextResponse.redirect(new URL("/admin", req.url));
+    if (isAdmin) return NextResponse.redirect(new URL("/admin", req.url));
     if (role === "INSTRUCTOR") {
       return NextResponse.redirect(new URL(getDashboardPath(role, status, profileCompleted), req.url));
     }
@@ -53,7 +56,7 @@ export default auth((req) => {
   if (pathname.startsWith("/instructor") && pathname !== "/instructor/complete-profile") {
     if (!isLoggedIn || role !== "INSTRUCTOR") {
       if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
-      if (role === "ADMIN") return NextResponse.redirect(new URL("/admin", req.url));
+      if (role === "ADMIN" || isAdmin) return NextResponse.redirect(new URL("/admin", req.url));
       if (role === "STUDENT") return NextResponse.redirect(new URL("/student", req.url));
     }
     if (isLoggedIn && role === "INSTRUCTOR" && status === "PENDING") {

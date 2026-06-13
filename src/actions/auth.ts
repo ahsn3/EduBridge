@@ -14,16 +14,12 @@ import {
   verifyOtpCode,
 } from "@/lib/otp";
 import { getPostLoginPath } from "@/lib/auth-routing-server";
+import { isAdminEmail } from "@/lib/admin-emails";
+import { ensureAdminUser } from "@/lib/ensure-admin-user";
 import { AuthError } from "next-auth";
 import type { Prisma } from "@prisma/client";
 
 type RegisterRole = "STUDENT" | "INSTRUCTOR";
-
-const RESERVED_ADMIN_EMAILS = new Set([
-  "ahmed@admin.com",
-  "draz@admin.com",
-  "admin@edubridge.com",
-]);
 
 interface PendingRegistrationPayload {
   name: string;
@@ -35,6 +31,18 @@ interface PendingRegistrationPayload {
 
 function getOtpPurpose(role: RegisterRole) {
   return role === "INSTRUCTOR" ? "register_instructor" : "register_student";
+}
+
+import type { AuthIntent } from "@/lib/auth-utils";
+import { cookies } from "next/headers";
+
+export async function setAuthIntent(intent: AuthIntent) {
+  const cookieStore = await cookies();
+  cookieStore.set("auth_intent", intent, {
+    path: "/",
+    maxAge: 300,
+    sameSite: "lax",
+  });
 }
 
 export async function registerStudent(formData: FormData) {
@@ -59,7 +67,7 @@ async function startRegistration(formData: FormData, role: RegisterRole) {
     const validated = registerSchema.parse(raw);
     const email = validated.email.toLowerCase().trim();
 
-    if (RESERVED_ADMIN_EMAILS.has(email)) {
+    if (isAdminEmail(email)) {
       return { error: "This email is reserved for administrators. Please sign in instead." };
     }
 
@@ -275,10 +283,18 @@ export async function resendEmailOtp(email: string, role: RegisterRole) {
   }
 }
 
-export async function loginUser(formData: FormData) {
+export async function validateLoginCredentials(formData: FormData) {
   try {
     const email = (formData.get("email") as string)?.toLowerCase().trim();
     const password = formData.get("password") as string;
+
+    if (!email || !password) {
+      return { error: "Invalid email or password" };
+    }
+
+    if (isAdminEmail(email)) {
+      await ensureAdminUser(email);
+    }
 
     const user = await db.user.findUnique({
       where: { email },
@@ -290,7 +306,8 @@ export async function loginUser(formData: FormData) {
         password: true,
       },
     });
-    if (!user) {
+
+    if (!user || !user.password) {
       return { error: "Invalid email or password" };
     }
 
@@ -302,33 +319,50 @@ export async function loginUser(formData: FormData) {
       return { error: "Please verify your email before signing in." };
     }
 
-    if (!user.password) {
-      return { error: "Invalid email or password" };
-    }
-
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
       return { error: "Invalid email or password" };
     }
 
-    await signOut({ redirect: false });
-
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    const redirectTo = await getPostLoginPath(user.id);
+    const redirectTo = isAdminEmail(email)
+      ? "/admin"
+      : await getPostLoginPath(user.id);
 
     return {
       success: true,
       redirectTo,
       email,
-      role: user.role,
+      role: isAdminEmail(email) ? "ADMIN" : user.role,
     };
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Validate login error:", error);
     return { error: "Invalid email or password" };
+  }
+}
+
+/** @deprecated Use validateLoginCredentials + client signIn instead */
+export async function loginUser(formData: FormData) {
+  try {
+    const validated = await validateLoginCredentials(formData);
+    if (validated.error || !validated.success) {
+      return validated;
+    }
+
+    const email = (formData.get("email") as string)?.toLowerCase().trim();
+    const password = formData.get("password") as string;
+
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: validated.redirectTo,
+      redirect: true,
+    });
+
+    return validated;
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Invalid email or password" };
+    }
+    throw error;
   }
 }

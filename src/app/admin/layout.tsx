@@ -3,6 +3,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ADMIN_NAV } from "@/lib/constants";
 import { getCurrentUser } from "@/lib/auth";
 import { getDashboardPath } from "@/lib/auth-routing";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  if (user.role !== "ADMIN" || user.status !== "ACTIVE") {
+  if (user.status !== "ACTIVE" || (!isAdminEmail(user.email) && user.role !== "ADMIN")) {
     redirect(getDashboardPath(user.role, user.status));
   }
 
