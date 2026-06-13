@@ -15,7 +15,7 @@ import {
 } from "@/lib/otp";
 import { getDashboardPath } from "@/lib/auth-utils";
 import { AuthError } from "next-auth";
-import type { Role } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 type RegisterRole = "STUDENT" | "INSTRUCTOR";
 
@@ -87,7 +87,7 @@ async function startRegistration(formData: FormData, role: RegisterRole) {
         email,
         codeHash,
         purpose,
-        payload,
+        payload: payload as unknown as Prisma.InputJsonValue,
         expiresAt: getOtpExpiryDate(),
       },
     });
@@ -151,7 +151,7 @@ export async function verifyEmailOtp(formData: FormData) {
       return { error: "Invalid verification code" };
     }
 
-    const payload = record.payload as PendingRegistrationPayload;
+    const payload = record.payload as unknown as PendingRegistrationPayload;
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) {
       return { error: "Email already registered" };
