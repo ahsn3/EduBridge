@@ -4,14 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/shared/logo";
-import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useLocale } from "@/hooks/use-locale";
 import { registerStudent } from "@/actions/auth";
+import { savePendingAuth } from "@/lib/pending-auth";
 import { toast } from "sonner";
 
 export default function StudentRegisterPage() {
@@ -23,6 +22,9 @@ export default function StudentRegisterPage() {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    const email = (formData.get("email") as string).toLowerCase().trim();
+
     const result = await registerStudent(formData);
 
     if (result.error) {
@@ -31,9 +33,9 @@ export default function StudentRegisterPage() {
       return;
     }
 
-    toast.success(t.common.success);
-    router.push("/student");
-    router.refresh();
+    savePendingAuth({ email, role: "STUDENT", password });
+    toast.success(t.auth.otpSent);
+    router.push(`/verify-email?email=${encodeURIComponent(email)}&role=STUDENT`);
   }
 
   return (
@@ -72,15 +74,6 @@ export default function StudentRegisterPage() {
               {loading ? t.common.loading : t.auth.createStudentAccount}
             </Button>
           </form>
-
-          <div className="relative">
-            <Separator />
-            <span className="absolute start-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-              {t.auth.orContinueWith}
-            </span>
-          </div>
-
-          <GoogleAuthButton intent="student" label={t.auth.googleStudent} />
 
           <p className="text-center text-sm text-muted-foreground">
             {t.auth.hasAccount}{" "}

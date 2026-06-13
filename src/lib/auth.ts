@@ -1,15 +1,9 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import {
-  AUTH_INTENT_COOKIE,
-  getDashboardPath,
-  type AuthIntent,
-} from "@/lib/auth-utils";
+import { getDashboardPath } from "@/lib/auth-utils";
 import type { AccountStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
@@ -41,28 +35,6 @@ declare module "@auth/core/jwt" {
   }
 }
 
-async function getAuthIntent(): Promise<AuthIntent> {
-  try {
-    const cookieStore = await cookies();
-    const intent = cookieStore.get(AUTH_INTENT_COOKIE)?.value;
-    if (intent === "student" || intent === "instructor" || intent === "login") {
-      return intent;
-    }
-  } catch {
-    // cookies unavailable outside request
-  }
-  return "login";
-}
-
-async function clearAuthIntent() {
-  try {
-    const cookieStore = await cookies();
-    cookieStore.delete(AUTH_INTENT_COOKIE);
-  } catch {
-    // ignore
-  }
-}
-
 async function loadUserAuthFields(userId: string) {
   return db.user.findUnique({
     where: { id: userId },
@@ -78,11 +50,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     newUser: "/register/student",
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -94,8 +61,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const email = (credentials.email as string).toLowerCase().trim();
+
         const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!user || !user.password) {
@@ -103,6 +72,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         if (user.status === "INACTIVE") {
+          return null;
+        }
+
+        if (!user.emailVerified) {
           return null;
         }
 
@@ -128,22 +101,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider !== "google" || !user.email) {
-        return true;
-      }
-
-      const existing = await db.user.findUnique({
-        where: { email: user.email },
-      });
-
-      if (existing?.status === "INACTIVE") {
-        return false;
-      }
-
-      await clearAuthIntent();
-      return true;
-    },
     async jwt({ token, user, trigger, session }) {
       if (user?.id) {
         const dbUser = await loadUserAuthFields(user.id);
@@ -182,24 +139,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (url.startsWith(baseUrl)) return url;
       return `${baseUrl}/auth/redirect`;
-    },
-  },
-  events: {
-    async createUser({ user }) {
-      const intent = await getAuthIntent();
-      const isInstructorSignup = intent === "instructor";
-
-      await db.user.update({
-        where: { id: user.id },
-        data: {
-          role: isInstructorSignup ? "INSTRUCTOR" : "STUDENT",
-          status: isInstructorSignup ? "PENDING" : "ACTIVE",
-          nameAr: user.name,
-          nameEn: user.name,
-        },
-      });
-
-      await clearAuthIntent();
     },
   },
 });

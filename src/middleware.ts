@@ -8,7 +8,8 @@ export default auth((req) => {
   const role = req.auth?.user?.role;
   const status = req.auth?.user?.status ?? "ACTIVE";
 
-  const authRoutes = ["/login", "/register", "/register/student", "/register/instructor"];
+  const authRoutes = ["/login", "/register", "/register/student", "/register/instructor",
+    "/verify-email", "/verify-email"];
   const isAuthRoute = authRoutes.includes(pathname);
 
   if (isLoggedIn && status === "INACTIVE" && pathname !== "/account-suspended") {
@@ -64,6 +65,7 @@ export const config = {
     "/register",
     "/register/student",
     "/register/instructor",
+    "/verify-email",
     "/pending-approval",
     "/account-suspended",
   ],

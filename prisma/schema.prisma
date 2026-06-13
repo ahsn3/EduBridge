@@ -113,6 +113,21 @@ model Session {
   @@map("auth_sessions")
 }
 
+
+model EmailOtp {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  purpose   String
+  payload   Json
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+  @@map("email_otps")
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
