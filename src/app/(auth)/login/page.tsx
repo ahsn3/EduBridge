@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Logo } from "@/components/shared/logo";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const { t } = useLocale();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -30,8 +28,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(result.redirectTo || "/student");
-    router.refresh();
+    window.location.href = result.redirectTo || "/student";
   }
 
   return (

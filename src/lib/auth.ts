@@ -119,14 +119,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user?.id) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email ?? undefined;
-        token.picture =
-          "avatar" in user && user.avatar ? (user.avatar as string) : undefined;
-        if ("role" in user && user.role) token.role = user.role as Role;
-        if ("status" in user && user.status) token.status = user.status as AccountStatus;
-        if ("locale" in user && user.locale) token.locale = user.locale as string;
+        const dbUser = await loadUserAuthFields(user.id);
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.status = dbUser.status;
+          token.locale = dbUser.locale;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.picture = dbUser.avatar;
+        } else {
+          token.id = user.id;
+          token.name = user.name;
+          token.email = user.email ?? undefined;
+          token.picture =
+            "avatar" in user && user.avatar ? (user.avatar as string) : undefined;
+          if ("role" in user && user.role) token.role = user.role as Role;
+          if ("status" in user && user.status) token.status = user.status as AccountStatus;
+          if ("locale" in user && user.locale) token.locale = user.locale as string;
+        }
+        return token;
       }
 
       if (token.id) {

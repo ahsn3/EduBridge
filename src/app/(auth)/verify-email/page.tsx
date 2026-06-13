@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,10 @@ function VerifyEmailForm() {
   useEffect(() => {
     if (!email) {
       router.replace("/register");
+      return;
     }
+    // Clear any existing session (e.g. admin) so the new account gets its own session
+    signOut({ redirect: false });
   }, [email, router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -64,8 +68,8 @@ function VerifyEmailForm() {
     }
 
     toast.success(t.auth.verifySuccess);
-    router.push(result.redirectTo || (role === "INSTRUCTOR" ? "/pending-approval" : "/student"));
-    router.refresh();
+    // Full reload ensures JWT/session matches the newly created account
+    window.location.href = result.redirectTo || (role === "INSTRUCTOR" ? "/pending-approval" : "/student");
   }
 
   async function handleResend() {

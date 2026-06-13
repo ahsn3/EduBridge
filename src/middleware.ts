@@ -17,7 +17,13 @@ export default auth((req) => {
   }
 
   if (isAuthRoute && isLoggedIn && role && status) {
-    return NextResponse.redirect(new URL(getDashboardPath(role, status), req.url));
+    // Allow verify-email and registration while completing a new account signup
+    const completingSignup =
+      pathname === "/verify-email" ||
+      pathname.startsWith("/register");
+    if (!completingSignup) {
+      return NextResponse.redirect(new URL(getDashboardPath(role, status), req.url));
+    }
   }
 
   if (pathname.startsWith("/student") && isLoggedIn && role === "ADMIN") {

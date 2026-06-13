@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations";
 import { generateReferralCode } from "@/lib/utils";
-import { signIn } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 import { sendOtpEmail } from "@/lib/email";
 import {
   generateOtpCode,
@@ -161,6 +161,8 @@ export async function verifyEmailOtp(formData: FormData) {
       return { error: "Email already registered" };
     }
 
+    const userRole = role === "INSTRUCTOR" ? "INSTRUCTOR" : "STUDENT";
+
     const user = await db.user.create({
       data: {
         name: payload.name,
@@ -168,8 +170,8 @@ export async function verifyEmailOtp(formData: FormData) {
         nameEn: payload.name,
         email,
         password: payload.passwordHash,
-        role: payload.role,
-        status: payload.role === "INSTRUCTOR" ? "PENDING" : "ACTIVE",
+        role: userRole,
+        status: userRole === "INSTRUCTOR" ? "PENDING" : "ACTIVE",
         emailVerified: new Date(),
         referralCode: payload.referralCode,
         referredBy: payload.referredBy,
@@ -188,6 +190,8 @@ export async function verifyEmailOtp(formData: FormData) {
       };
     }
 
+    await signOut({ redirect: false });
+
     await signIn("credentials", {
       email,
       password: plainPassword,
@@ -198,6 +202,8 @@ export async function verifyEmailOtp(formData: FormData) {
       success: true,
       pending: user.role === "INSTRUCTOR",
       redirectTo: getDashboardPath(user.role, user.status),
+      email: user.email,
+      role: user.role,
     };
   } catch (error) {
     if (error instanceof AuthError) {
@@ -275,6 +281,8 @@ export async function loginUser(formData: FormData) {
       return { error: "Invalid email or password" };
     }
 
+    await signOut({ redirect: false });
+
     await signIn("credentials", {
       email,
       password,
@@ -284,6 +292,8 @@ export async function loginUser(formData: FormData) {
     return {
       success: true,
       redirectTo: getDashboardPath(user.role, user.status),
+      email: user.email,
+      role: user.role,
     };
   } catch (error) {
     console.error("Login error:", error);
