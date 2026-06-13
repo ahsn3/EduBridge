@@ -35,7 +35,7 @@ async function main() {
 
   for (const admin of ADMINS) {
     const hashed = await bcrypt.hash(admin.password, 12);
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: admin.email },
       update: {
         password: hashed,
@@ -56,7 +56,14 @@ async function main() {
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
       },
     });
-    console.log(`Admin ready: ${admin.email}`);
+
+    await prisma.instructorProfile.deleteMany({ where: { userId: user.id } });
+
+    const check = await prisma.user.findUnique({
+      where: { email: admin.email },
+      select: { email: true, role: true, status: true },
+    });
+    console.log(`Admin ready: ${check.email} role=${check.role} status=${check.status}`);
   }
 }
 

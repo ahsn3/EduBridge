@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 const ADMINS = [
@@ -19,6 +19,14 @@ const ADMINS = [
     nameEn: "Draz Admin",
     referralCode: "ADM003",
   },
+  {
+    email: "admin@edubridge.com",
+    password: "password123",
+    name: "System Admin",
+    nameAr: "مدير النظام",
+    nameEn: "System Admin",
+    referralCode: "ADM001",
+  },
 ];
 
 export async function GET(req: Request) {
@@ -29,14 +37,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const prisma = new PrismaClient();
   const verified = new Date();
-  const created: string[] = [];
+  const fixed: string[] = [];
 
   try {
     for (const admin of ADMINS) {
       const hashed = await bcrypt.hash(admin.password, 12);
-      await prisma.user.upsert({
+      const user = await db.user.upsert({
         where: { email: admin.email },
         update: {
           password: hashed,
@@ -56,21 +63,27 @@ export async function GET(req: Request) {
           referralCode: admin.referralCode,
         },
       });
-      created.push(admin.email);
+
+      await db.instructorProfile.deleteMany({ where: { userId: user.id } });
+      fixed.push(admin.email);
     }
+
+    const users = await db.user.findMany({
+      where: { email: { in: fixed } },
+      select: { email: true, role: true, status: true, emailVerified: true },
+      orderBy: { email: "asc" },
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Admin accounts created. Login with ahmed@admin.com / Ahmed123",
-      emails: created,
+      message: "Admin accounts fixed. Sign out and sign in again.",
+      users,
     });
   } catch (error) {
     console.error("Setup admins error:", error);
     return NextResponse.json(
-      { error: "Failed to create admins. Check DATABASE_URL and run prisma db push." },
+      { error: "Failed to fix admins. Check DATABASE_URL and run prisma db push." },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

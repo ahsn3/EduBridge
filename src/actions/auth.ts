@@ -13,11 +13,17 @@ import {
   OTP_MAX_ATTEMPTS,
   verifyOtpCode,
 } from "@/lib/otp";
-import { getPostLoginPath } from "@/lib/auth-routing";
+import { getPostLoginPath } from "@/lib/auth-routing-server";
 import { AuthError } from "next-auth";
 import type { Prisma } from "@prisma/client";
 
 type RegisterRole = "STUDENT" | "INSTRUCTOR";
+
+const RESERVED_ADMIN_EMAILS = new Set([
+  "ahmed@admin.com",
+  "draz@admin.com",
+  "admin@edubridge.com",
+]);
 
 interface PendingRegistrationPayload {
   name: string;
@@ -52,6 +58,11 @@ async function startRegistration(formData: FormData, role: RegisterRole) {
 
     const validated = registerSchema.parse(raw);
     const email = validated.email.toLowerCase().trim();
+
+    if (RESERVED_ADMIN_EMAILS.has(email)) {
+      return { error: "This email is reserved for administrators. Please sign in instead." };
+    }
+
     const purpose = getOtpPurpose(role);
 
     const existing = await db.user.findUnique({ where: { email } });
@@ -269,7 +280,16 @@ export async function loginUser(formData: FormData) {
     const email = (formData.get("email") as string)?.toLowerCase().trim();
     const password = formData.get("password") as string;
 
-    const user = await db.user.findUnique({ where: { email } });
+    const user = await db.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        password: true,
+      },
+    });
     if (!user) {
       return { error: "Invalid email or password" };
     }
@@ -299,10 +319,12 @@ export async function loginUser(formData: FormData) {
       redirect: false,
     });
 
+    const redirectTo = await getPostLoginPath(user.id);
+
     return {
       success: true,
-      redirectTo: await getPostLoginPath(user.id),
-      email: user.email,
+      redirectTo,
+      email,
       role: user.role,
     };
   } catch (error) {
