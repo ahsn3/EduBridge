@@ -13,6 +13,7 @@ import {
   OTP_MAX_ATTEMPTS,
   verifyOtpCode,
 } from "@/lib/otp";
+import { redirect } from "next/navigation";
 import { getPostLoginPath } from "@/lib/auth-routing-server";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { ensureAdminUser } from "@/lib/ensure-admin-user";
@@ -283,6 +284,33 @@ export async function resendEmailOtp(email: string, role: RegisterRole) {
   }
 }
 
+/** Server-side login — sets session cookie and redirects in one response. */
+export async function loginAction(formData: FormData) {
+  const validated = await validateLoginCredentials(formData);
+
+  if (validated.error || !validated.success) {
+    redirect(`/login?error=${encodeURIComponent(validated.error || "Invalid email or password")}`);
+  }
+
+  const email = (formData.get("email") as string).toLowerCase().trim();
+  const password = formData.get("password") as string;
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: validated.redirectTo ?? "/admin",
+      redirect: true,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect(`/login?error=${encodeURIComponent("Invalid email or password")}`);
+    }
+    throw error;
+  }
+}
+
+/** Validates credentials only — used for pre-checks if needed. */
 export async function validateLoginCredentials(formData: FormData) {
   try {
     const email = (formData.get("email") as string)?.toLowerCase().trim();

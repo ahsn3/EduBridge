@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
@@ -7,7 +6,6 @@ import { getDashboardPath } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { ensureAdminUser } from "@/lib/ensure-admin-user";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
-import type { JWT } from "@auth/core/jwt";
 
 declare module "next-auth" {
   interface Session {
@@ -46,60 +44,13 @@ declare module "@auth/core/jwt" {
   }
 }
 
-async function loadUserAuthFields(userId: string) {
-  return db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      role: true,
-      status: true,
-      locale: true,
-      name: true,
-      email: true,
-      avatar: true,
-      instructorProfile: {
-        select: { profileCompleted: true, approvalStatus: true },
-      },
-    },
-  });
-}
-
-async function loadUserAuthFieldsByEmail(email: string) {
-  return db.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
-    select: {
-      id: true,
-      role: true,
-      status: true,
-      locale: true,
-      name: true,
-      email: true,
-      avatar: true,
-      instructorProfile: {
-        select: { profileCompleted: true, approvalStatus: true },
-      },
-    },
-  });
-}
-
-function applyDbUserToToken(token: JWT, dbUser: NonNullable<Awaited<ReturnType<typeof loadUserAuthFields>>>) {
-  return {
-    ...token,
-    sub: dbUser.id,
-    id: dbUser.id,
-    role: dbUser.role,
-    status: dbUser.status,
-    locale: dbUser.locale,
-    name: dbUser.name,
-    email: dbUser.email,
-    picture: dbUser.avatar,
-    instructorProfileCompleted: dbUser.instructorProfile?.profileCompleted ?? false,
-    instructorApprovalStatus: dbUser.instructorProfile?.approvalStatus ?? null,
-  };
+function resolveRole(email: string | null | undefined, role?: Role | null): Role {
+  if (isAdminEmail(email)) return "ADMIN";
+  return role ?? "STUDENT";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
@@ -108,6 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     Credentials({
+      id: "credentials",
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
@@ -124,23 +76,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await ensureAdminUser(email);
         }
 
-        const user = await db.user.findUnique({
-          where: { email },
-        });
+        const user = await db.user.findUnique({ where: { email } });
 
-        if (!user || !user.password) {
+        if (!user?.password || user.status === "INACTIVE") {
           return null;
         }
 
-        if (user.status === "INACTIVE") {
-          return null;
-        }
-
-        if (!user.emailVerified && user.role !== "ADMIN") {
-          return null;
-        }
-
-        if (!user.password) {
+        if (!user.emailVerified && !isAdminEmail(email) && user.role !== "ADMIN") {
           return null;
         }
 
@@ -153,14 +95,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const role = resolveRole(email, user.role);
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role,
           status: user.status,
           avatar: user.avatar,
-          locale: user.locale,
+          locale: user.locale ?? "ar",
         };
       },
     }),
@@ -178,38 +122,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           avatar?: string | null;
         };
 
+        const email = credUser.email ?? undefined;
+        const role = resolveRole(email, credUser.role);
+
         return {
           ...token,
           sub: credUser.id,
           id: credUser.id,
-          role: credUser.role ?? "STUDENT",
+          role,
           status: credUser.status ?? "ACTIVE",
           locale: credUser.locale ?? "ar",
           name: credUser.name,
-          email: credUser.email ?? undefined,
+          email,
           picture: credUser.avatar ?? undefined,
           instructorProfileCompleted: false,
           instructorApprovalStatus: null,
         };
-      }
-
-      if (isAdminEmail(typeof token.email === "string" ? token.email : undefined)) {
-        return {
-          ...token,
-          role: "ADMIN" as Role,
-          status: "ACTIVE" as AccountStatus,
-        };
-      }
-
-      const email = typeof token.email === "string" ? token.email : undefined;
-      const dbUser = email
-        ? await loadUserAuthFieldsByEmail(email)
-        : token.id
-          ? await loadUserAuthFields(token.id)
-          : null;
-
-      if (dbUser) {
-        return applyDbUserToToken(token, dbUser);
       }
 
       if (trigger === "update" && session) {
@@ -217,22 +145,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (session.locale) token.locale = session.locale;
       }
 
+      if (token.email) {
+        token.role = resolveRole(token.email, token.role);
+      }
+
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = isAdminEmail(token.email)
-          ? "ADMIN"
-          : token.role;
-        session.user.status = token.status;
-        session.user.locale = token.locale;
-        if (token.name) session.user.name = token.name;
-        if (token.email) session.user.email = token.email;
-        session.user.avatar = token.picture ?? null;
-        session.user.instructorProfileCompleted = token.instructorProfileCompleted ?? false;
-        session.user.instructorApprovalStatus = token.instructorApprovalStatus ?? null;
-      }
+      const role = resolveRole(token.email, token.role);
+
+      session.user.id = token.id ?? token.sub ?? "";
+      session.user.role = role;
+      session.user.status = (token.status as AccountStatus) ?? "ACTIVE";
+      session.user.locale = token.locale ?? "ar";
+      session.user.name = token.name ?? session.user.name ?? "";
+      session.user.email = token.email ?? session.user.email ?? "";
+      session.user.avatar = token.picture ?? null;
+      session.user.instructorProfileCompleted = token.instructorProfileCompleted ?? false;
+      session.user.instructorApprovalStatus = token.instructorApprovalStatus ?? null;
+
       return session;
     },
     async redirect({ url, baseUrl }) {
@@ -243,34 +174,62 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
-export async function getCurrentUser() {
+export async function getSessionUser() {
   const session = await auth();
-  if (!session?.user) return null;
+  return session?.user ?? null;
+}
 
-  const email = session.user.email?.toLowerCase().trim();
+export async function getCurrentUser() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser?.email) return null;
 
-  if (isAdminEmail(email)) {
-    await ensureAdminUser(email!);
+  const email = sessionUser.email.toLowerCase().trim();
+
+  try {
+    if (isAdminEmail(email)) {
+      await ensureAdminUser(email);
+    }
+
+    const user = await db.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        avatar: true,
+        locale: true,
+        phone: true,
+        bio: true,
+        referralCode: true,
+        createdAt: true,
+      },
+    });
+
+    if (user) {
+      if (isAdminEmail(email) && user.role !== "ADMIN") {
+        return { ...user, role: "ADMIN" as Role, status: "ACTIVE" as AccountStatus };
+      }
+      return user;
+    }
+  } catch (error) {
+    console.error("getCurrentUser db lookup failed:", error);
   }
 
-  const user = await db.user.findUnique({
-    where: email ? { email } : { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-      avatar: true,
-      locale: true,
-      phone: true,
-      bio: true,
-      referralCode: true,
-      createdAt: true,
-    },
-  });
-
-  return user;
+  return {
+    id: sessionUser.id,
+    name: sessionUser.name,
+    email: sessionUser.email,
+    role: resolveRole(email, sessionUser.role),
+    status: sessionUser.status,
+    avatar: sessionUser.avatar ?? null,
+    locale: sessionUser.locale ?? "ar",
+    phone: null,
+    bio: null,
+    referralCode: null,
+    createdAt: new Date(),
+  };
 }
 
 export function requireRole(allowedRoles: Role[]) {
