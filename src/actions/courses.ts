@@ -68,16 +68,23 @@ export async function createCourse(formData: FormData) {
       isPublished: formData.get("isPublished") === "true",
     });
 
+    const instructorId =
+      user.role === "ADMIN"
+        ? (formData.get("instructorId") as string) || user.id
+        : user.id;
+
     const course = await db.course.create({
       data: {
         ...data,
         title: data.titleAr,
         description: data.descriptionAr,
-        instructorId: user.id,
+        instructorId,
       },
     });
 
     revalidatePath("/instructor/courses");
+    revalidatePath("/admin/courses");
+    revalidatePath("/");
     return { success: true, courseId: course.id };
   } catch (error) {
     console.error("Create course error:", error);
@@ -116,6 +123,8 @@ export async function updateCourse(id: string, formData: FormData) {
 
     revalidatePath(`/courses/${id}`);
     revalidatePath("/instructor/courses");
+    revalidatePath("/admin/courses");
+    revalidatePath("/");
     return { success: true };
   } catch {
     return { error: "Failed to update course" };
@@ -134,6 +143,25 @@ export async function deleteCourse(id: string) {
 
   await db.course.delete({ where: { id } });
   revalidatePath("/instructor/courses");
+  revalidatePath("/admin/courses");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function toggleCoursePublish(id: string) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "ADMIN") return { error: "Unauthorized" };
+
+  const course = await db.course.findUnique({ where: { id } });
+  if (!course) return { error: "Course not found" };
+
+  await db.course.update({
+    where: { id },
+    data: { isPublished: !course.isPublished },
+  });
+
+  revalidatePath("/admin/courses");
+  revalidatePath("/");
   return { success: true };
 }
 

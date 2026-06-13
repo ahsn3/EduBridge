@@ -247,3 +247,188 @@ export async function getAnalytics() {
       .slice(0, 10),
   };
 }
+
+export async function getActiveInstructors() {
+  const admin = await requireAdmin();
+  if (!admin) return [];
+
+  return db.user.findMany({
+    where: { role: "INSTRUCTOR", status: "ACTIVE" },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getAllCategories() {
+  const admin = await requireAdmin();
+  if (!admin) return [];
+
+  return db.category.findMany({
+    include: { _count: { select: { courses: true } } },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createCategory(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const nameAr = formData.get("nameAr") as string;
+  const nameEn = formData.get("nameEn") as string;
+  const slug = formData.get("slug") as string;
+  const icon = (formData.get("icon") as string) || undefined;
+  const description = (formData.get("description") as string) || undefined;
+
+  if (!nameAr || !nameEn || !slug) {
+    return { error: "Missing required fields" };
+  }
+
+  await db.category.create({
+    data: { name: nameAr, nameAr, nameEn, slug, icon, description },
+  });
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function updateCategory(id: string, formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const nameAr = formData.get("nameAr") as string;
+  const nameEn = formData.get("nameEn") as string;
+  const slug = formData.get("slug") as string;
+  const icon = (formData.get("icon") as string) || undefined;
+  const description = (formData.get("description") as string) || undefined;
+
+  await db.category.update({
+    where: { id },
+    data: { name: nameAr, nameAr, nameEn, slug, icon, description },
+  });
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteCategory(id: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const count = await db.course.count({ where: { categoryId: id } });
+  if (count > 0) {
+    return { error: "Cannot delete category with courses" };
+  }
+
+  await db.category.delete({ where: { id } });
+  revalidatePath("/admin/categories");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function getAllTestimonials() {
+  const admin = await requireAdmin();
+  if (!admin) return [];
+
+  return db.testimonial.findMany({ orderBy: { createdAt: "desc" } });
+}
+
+export async function createTestimonial(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const nameAr = formData.get("nameAr") as string;
+  const nameEn = formData.get("nameEn") as string;
+  const roleAr = formData.get("roleAr") as string;
+  const roleEn = formData.get("roleEn") as string;
+  const contentAr = formData.get("contentAr") as string;
+  const contentEn = formData.get("contentEn") as string;
+  const avatar = (formData.get("avatar") as string) || undefined;
+  const rating = Number(formData.get("rating") || 5);
+
+  await db.testimonial.create({
+    data: {
+      name: nameAr,
+      nameAr,
+      nameEn,
+      role: roleAr,
+      roleAr,
+      roleEn,
+      content: contentAr,
+      contentAr,
+      contentEn,
+      avatar,
+      rating,
+      isActive: true,
+    },
+  });
+
+  revalidatePath("/admin/testimonials");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function updateTestimonial(id: string, formData: FormData) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const nameAr = formData.get("nameAr") as string;
+  const nameEn = formData.get("nameEn") as string;
+  const roleAr = formData.get("roleAr") as string;
+  const roleEn = formData.get("roleEn") as string;
+  const contentAr = formData.get("contentAr") as string;
+  const contentEn = formData.get("contentEn") as string;
+  const avatar = (formData.get("avatar") as string) || undefined;
+  const rating = Number(formData.get("rating") || 5);
+  const isActive = formData.get("isActive") === "true";
+
+  await db.testimonial.update({
+    where: { id },
+    data: {
+      name: nameAr,
+      nameAr,
+      nameEn,
+      role: roleAr,
+      roleAr,
+      roleEn,
+      content: contentAr,
+      contentAr,
+      contentEn,
+      avatar,
+      rating,
+      isActive,
+    },
+  });
+
+  revalidatePath("/admin/testimonials");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteTestimonial(id: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  await db.testimonial.delete({ where: { id } });
+  revalidatePath("/admin/testimonials");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function toggleTestimonial(id: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const item = await db.testimonial.findUnique({ where: { id } });
+  if (!item) return { error: "Not found" };
+
+  await db.testimonial.update({
+    where: { id },
+    data: { isActive: !item.isActive },
+  });
+
+  revalidatePath("/admin/testimonials");
+  revalidatePath("/");
+  return { success: true };
+}

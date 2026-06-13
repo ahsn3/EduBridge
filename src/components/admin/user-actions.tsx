@@ -9,6 +9,7 @@ import {
   rejectInstructor,
   updateUserStatus,
 } from "@/actions/admin";
+import { useLocale } from "@/hooks/use-locale";
 import type { AccountStatus } from "@prisma/client";
 
 interface UserActionsProps {
@@ -18,6 +19,7 @@ interface UserActionsProps {
 }
 
 export function UserActions({ userId, role, status }: UserActionsProps) {
+  const { t } = useLocale();
   const [pending, startTransition] = useTransition();
 
   function run(action: () => Promise<{ error?: string; success?: boolean }>, successMsg: string) {
@@ -34,21 +36,21 @@ export function UserActions({ userId, role, status }: UserActionsProps) {
   if (role === "INSTRUCTOR" && status === "PENDING") {
     return (
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">Pending</Badge>
+        <Badge variant="secondary">{t.admin.pending}</Badge>
         <Button
           size="sm"
           disabled={pending}
-          onClick={() => run(() => approveInstructor(userId), "Instructor approved")}
+          onClick={() => run(() => approveInstructor(userId), t.admin.instructorApproved)}
         >
-          Approve
+          {t.admin.approve}
         </Button>
         <Button
           size="sm"
           variant="destructive"
           disabled={pending}
-          onClick={() => run(() => rejectInstructor(userId), "Application rejected")}
+          onClick={() => run(() => rejectInstructor(userId), t.admin.applicationRejected)}
         >
-          Reject
+          {t.admin.reject}
         </Button>
       </div>
     );
@@ -57,14 +59,16 @@ export function UserActions({ userId, role, status }: UserActionsProps) {
   if (status === "ACTIVE") {
     return (
       <div className="flex items-center gap-2">
-        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">Active</Badge>
+        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">
+          {t.admin.active}
+        </Badge>
         <Button
           size="sm"
           variant="outline"
           disabled={pending}
-          onClick={() => run(() => updateUserStatus(userId, "INACTIVE"), "Account deactivated")}
+          onClick={() => run(() => updateUserStatus(userId, "INACTIVE"), t.admin.accountDeactivated)}
         >
-          Deactivate
+          {t.admin.deactivate}
         </Button>
       </div>
     );
@@ -72,13 +76,13 @@ export function UserActions({ userId, role, status }: UserActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant="destructive">Inactive</Badge>
+      <Badge variant="destructive">{t.admin.inactive}</Badge>
       <Button
         size="sm"
         disabled={pending}
-        onClick={() => run(() => updateUserStatus(userId, "ACTIVE"), "Account activated")}
+        onClick={() => run(() => updateUserStatus(userId, "ACTIVE"), t.admin.accountActivated)}
       >
-        Activate
+        {t.admin.activate}
       </Button>
     </div>
   );

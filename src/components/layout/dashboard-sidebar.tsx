@@ -15,6 +15,8 @@ import {
   UserCheck,
   CreditCard,
   BarChart3,
+  FolderOpen,
+  MessageSquare,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -36,6 +38,8 @@ const iconMap = {
   UserCheck,
   CreditCard,
   BarChart3,
+  FolderOpen,
+  MessageSquare,
 } as const;
 
 interface NavItem {

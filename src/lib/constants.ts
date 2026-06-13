@@ -88,6 +88,8 @@ export const ADMIN_NAV = [
   { href: "/admin/students", icon: "Users", labelKey: "students" },
   { href: "/admin/instructors", icon: "GraduationCap", labelKey: "instructors" },
   { href: "/admin/courses", icon: "BookOpen", labelKey: "courses" },
+  { href: "/admin/categories", icon: "FolderOpen", labelKey: "categories" },
+  { href: "/admin/testimonials", icon: "MessageSquare", labelKey: "testimonials" },
   { href: "/admin/enrollments", icon: "UserCheck", labelKey: "enrollments" },
   { href: "/admin/payments", icon: "CreditCard", labelKey: "payments" },
   { href: "/admin/analytics", icon: "BarChart3", labelKey: "analytics" },

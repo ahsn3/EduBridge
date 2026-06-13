@@ -7,6 +7,8 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   const password = await bcrypt.hash("password123", 12);
+  const ahmedAdminPassword = await bcrypt.hash("Ahmed123", 12);
+  const drazAdminPassword = await bcrypt.hash("Draz123", 12);
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@edubridge.com" },
@@ -19,9 +21,40 @@ async function main() {
       password,
       role: "ADMIN",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "ADM001",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "ahmed@admin.com" },
+    update: { status: "ACTIVE", role: "ADMIN", password: ahmedAdminPassword },
+    create: {
+      name: "Ahmed Admin",
+      nameAr: "أحمد - مدير",
+      nameEn: "Ahmed Admin",
+      email: "ahmed@admin.com",
+      password: ahmedAdminPassword,
+      role: "ADMIN",
+      status: "ACTIVE",
+      referralCode: "ADM002",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "draz@admin.com" },
+    update: { status: "ACTIVE", role: "ADMIN", password: drazAdminPassword },
+    create: {
+      name: "Draz Admin",
+      nameAr: "دراز - مدير",
+      nameEn: "Draz Admin",
+      email: "draz@admin.com",
+      password: drazAdminPassword,
+      role: "ADMIN",
+      status: "ACTIVE",
+      referralCode: "ADM003",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
     },
   });
 
@@ -37,7 +70,6 @@ async function main() {
       password,
       role: "INSTRUCTOR",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "AHA001",
       bio: "Assistant Professor in Biomedical Engineering",
       bioAr: "أستاذ مساعد في الهندسة الطبية الحيوية",
@@ -57,7 +89,6 @@ async function main() {
       password,
       role: "INSTRUCTOR",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "SAR001",
       bio: "Computer & Software Engineering Specialist",
       bioAr: "أخصائية في هندسة الحاسوب والبرمجيات",
@@ -77,7 +108,6 @@ async function main() {
       password,
       role: "INSTRUCTOR",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "OMR001",
       bio: "Aerospace Engineering Lecturer",
       bioAr: "محاضر في هندسة الطيران والفضاء",
@@ -97,7 +127,6 @@ async function main() {
       password,
       role: "STUDENT",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "MOH001",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
     },
@@ -114,7 +143,6 @@ async function main() {
       password,
       role: "STUDENT",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "FAT001",
       avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
     },
@@ -131,7 +159,6 @@ async function main() {
       password,
       role: "STUDENT",
       status: "ACTIVE",
-      emailVerified: new Date(),
       referralCode: "YOS001",
       avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200",
     },
