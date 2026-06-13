@@ -68,6 +68,9 @@ export const translations = {
       enrollments: "التسجيلات",
       categories: "التصنيفات",
       testimonials: "آراء الطلاب",
+      users: "المستخدمون",
+      academics: "الهيكل الأكاديمي",
+      notifications: "الإشعارات",
     },
     hero: {
       title: "مستقبلك الأكاديمي يبدأ هنا",
@@ -313,6 +316,9 @@ export const translations = {
       enrollments: "Enrollments",
       categories: "Categories",
       testimonials: "Testimonials",
+      users: "Users",
+      academics: "Academic Structure",
+      notifications: "Notifications",
     },
     hero: {
       title: "Your Academic Future Starts Here",

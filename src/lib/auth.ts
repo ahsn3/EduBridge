@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { getDashboardPath } from "@/lib/auth-utils";
-import type { AccountStatus, Role } from "@prisma/client";
+import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -16,6 +16,8 @@ declare module "next-auth" {
       status: AccountStatus;
       avatar?: string | null;
       locale: string;
+      instructorProfileCompleted?: boolean;
+      instructorApprovalStatus?: InstructorApprovalStatus | null;
     };
   }
 
@@ -36,6 +38,8 @@ declare module "@auth/core/jwt" {
     name?: string | null;
     email?: string | null;
     picture?: string | null;
+    instructorProfileCompleted?: boolean;
+    instructorApprovalStatus?: InstructorApprovalStatus | null;
   }
 }
 
@@ -50,6 +54,9 @@ async function loadUserAuthFields(userId: string) {
       name: true,
       email: true,
       avatar: true,
+      instructorProfile: {
+        select: { profileCompleted: true, approvalStatus: true },
+      },
     },
   });
 }
@@ -128,6 +135,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.name = dbUser.name;
           token.email = dbUser.email;
           token.picture = dbUser.avatar;
+          token.instructorProfileCompleted = dbUser.instructorProfile?.profileCompleted ?? false;
+          token.instructorApprovalStatus = dbUser.instructorProfile?.approvalStatus ?? null;
         } else {
           token.id = user.id;
           token.name = user.name;
@@ -151,6 +160,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.name = dbUser.name;
           token.email = dbUser.email;
           token.picture = dbUser.avatar;
+          token.instructorProfileCompleted = dbUser.instructorProfile?.profileCompleted ?? false;
+          token.instructorApprovalStatus = dbUser.instructorProfile?.approvalStatus ?? null;
         }
       }
 
@@ -170,6 +181,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
         session.user.avatar = token.picture ?? null;
+        session.user.instructorProfileCompleted = token.instructorProfileCompleted ?? false;
+        session.user.instructorApprovalStatus = token.instructorApprovalStatus ?? null;
       }
       return session;
     },

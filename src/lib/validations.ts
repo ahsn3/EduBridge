@@ -81,6 +81,37 @@ export const profileSchema = z.object({
   locale: z.enum(["ar", "en"]).default("ar"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    email: z.string().email(),
+    token: z.string().min(10),
+    password: z.string().min(6),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export const instructorProfileSchema = z.object({
+  name: z.string().min(2),
+  phone: z.string().min(6),
+  universityId: z.string().optional(),
+  facultyId: z.string().optional(),
+  departmentId: z.string().optional(),
+  universityName: z.string().optional(),
+  facultyName: z.string().optional(),
+  departmentName: z.string().optional(),
+  academicPositionAr: z.string().min(2),
+  academicPositionEn: z.string().min(2),
+  avatar: z.string().url().optional().or(z.literal("")),
+  cvUrl: z.string().min(1, "CV is required"),
+});
+
 export const contactSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),

@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { notifyUser } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 import type { AccountStatus } from "@prisma/client";
 
@@ -20,14 +21,20 @@ export async function getAdminDashboard() {
     totalInstructors,
     pendingInstructors,
     totalCourses,
+    totalSubjects,
+    totalFiles,
+    activeUsers,
     payments,
     recentEnrollments,
     popularCourses,
   ] = await Promise.all([
     db.user.count({ where: { role: "STUDENT", status: "ACTIVE" } }),
     db.user.count({ where: { role: "INSTRUCTOR", status: "ACTIVE" } }),
-    db.user.count({ where: { role: "INSTRUCTOR", status: "PENDING" } }),
+    db.instructorProfile.count({ where: { approvalStatus: "PENDING_REVIEW" } }),
     db.course.count(),
+    db.subject.count({ where: { status: "ACTIVE" } }),
+    db.contentFile.count({ where: { status: "ACTIVE" } }),
+    db.user.count({ where: { status: "ACTIVE" } }),
     db.payment.findMany({
       where: { paymentStatus: "COMPLETED" },
       select: { amount: true },
@@ -57,6 +64,9 @@ export async function getAdminDashboard() {
     totalInstructors,
     pendingInstructors,
     totalCourses,
+    totalSubjects,
+    totalFiles,
+    activeUsers,
     totalRevenue,
     recentEnrollments,
     popularCourses,
@@ -98,21 +108,129 @@ export async function updateUserStatus(userId: string, status: AccountStatus) {
   return { success: true };
 }
 
+export async function getInstructorsWithProfile() {
+  const admin = await requireAdmin();
+  if (!admin) return [];
+
+  return db.user.findMany({
+    where: { role: "INSTRUCTOR" },
+    include: {
+      instructorProfile: true,
+      _count: { select: { courses: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function approveInstructor(userId: string) {
-  return updateUserStatus(userId, "ACTIVE");
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  await db.user.update({
+    where: { id: userId },
+    data: { status: "ACTIVE" },
+  });
+
+  await db.instructorProfile.updateMany({
+    where: { userId },
+    data: {
+      approvalStatus: "APPROVED",
+      reviewedAt: new Date(),
+      reviewedById: admin.id,
+    },
+  });
+
+  await notifyUser(userId, {
+    titleAr: "تمت الموافقة على حسابك",
+    titleEn: "Your Account Was Approved",
+    messageAr: "يمكنك الآن الوصول إلى لوحة المدرب وإنشاء الدورات.",
+    messageEn: "You can now access the instructor dashboard and create courses.",
+    type: "success",
+    link: "/instructor",
+  });
+
+  revalidatePath("/admin/instructors");
+  return { success: true };
 }
 
 export async function rejectInstructor(userId: string) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Unauthorized" };
 
-  await db.user.update({
-    where: { id: userId },
-    data: { status: "INACTIVE", role: "STUDENT" },
+  await db.$transaction([
+    db.user.update({
+      where: { id: userId },
+      data: { status: "INACTIVE", role: "STUDENT" },
+    }),
+    db.instructorProfile.updateMany({
+      where: { userId },
+      data: { approvalStatus: "REJECTED", reviewedAt: new Date(), reviewedById: admin.id },
+    }),
+  ]);
+
+  await notifyUser(userId, {
+    titleAr: "تم رفض طلب المدرب",
+    titleEn: "Instructor Application Rejected",
+    messageAr: "للأسف لم تتم الموافقة على طلبك. تواصل مع الإدارة للمزيد.",
+    messageEn: "Your instructor application was not approved. Contact admin for details.",
+    type: "error",
   });
+
   revalidatePath("/admin/instructors");
   return { success: true };
 }
+
+export async function requestInstructorInfo(userId: string, notes: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  await db.instructorProfile.updateMany({
+    where: { userId },
+    data: {
+      approvalStatus: "INFO_REQUESTED",
+      adminNotes: notes,
+      profileCompleted: false,
+      reviewedAt: new Date(),
+      reviewedById: admin.id,
+    },
+  });
+
+  await notifyUser(userId, {
+    titleAr: "مطلوب معلومات إضافية",
+    titleEn: "Additional Information Required",
+    messageAr: notes,
+    messageEn: notes,
+    type: "warning",
+    link: "/instructor/complete-profile",
+  });
+
+  revalidatePath("/admin/instructors");
+  return { success: true };
+}
+
+export async function deleteUser(userId: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target || target.role === "ADMIN") return { error: "Cannot delete this account" };
+
+  await db.user.delete({ where: { id: userId } });
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+export async function resetUserPassword(userId: string, newPassword: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized" };
+
+  const bcrypt = await import("bcryptjs");
+  const hashed = await bcrypt.hash(newPassword, 12);
+  await db.user.update({ where: { id: userId }, data: { password: hashed } });
+  return { success: true };
+}
+
+// keep old approve/reject removed duplicates - updateUserStatus stays
 
 export async function updateUserRole(userId: string, role: "STUDENT" | "INSTRUCTOR" | "ADMIN") {
   const admin = await requireAdmin();

@@ -85,11 +85,14 @@ export const INSTRUCTOR_NAV = [
 
 export const ADMIN_NAV = [
   { href: "/admin", icon: "LayoutDashboard", labelKey: "overview" },
-  { href: "/admin/students", icon: "Users", labelKey: "students" },
+  { href: "/admin/users", icon: "Users", labelKey: "users" },
   { href: "/admin/instructors", icon: "GraduationCap", labelKey: "instructors" },
+  { href: "/admin/students", icon: "UserCheck", labelKey: "students" },
+  { href: "/admin/academics", icon: "FolderOpen", labelKey: "academics" },
   { href: "/admin/courses", icon: "BookOpen", labelKey: "courses" },
   { href: "/admin/categories", icon: "FolderOpen", labelKey: "categories" },
   { href: "/admin/testimonials", icon: "MessageSquare", labelKey: "testimonials" },
+  { href: "/admin/notifications", icon: "Bell", labelKey: "notifications" },
   { href: "/admin/enrollments", icon: "UserCheck", labelKey: "enrollments" },
   { href: "/admin/payments", icon: "CreditCard", labelKey: "payments" },
   { href: "/admin/analytics", icon: "BarChart3", labelKey: "analytics" },

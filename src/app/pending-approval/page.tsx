@@ -12,7 +12,7 @@ import { Clock, LogOut } from "lucide-react";
 import { useLocale } from "@/hooks/use-locale";
 
 export default function PendingApprovalPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -49,7 +49,9 @@ export default function PendingApprovalPage() {
           </div>
           <CardTitle className="text-2xl">{t.auth.pendingApprovalTitle}</CardTitle>
           <CardDescription className="text-base leading-relaxed">
-            {t.auth.pendingApprovalDesc}
+            {locale === "ar"
+              ? "حسابك قيد المراجعة. يجب على المدير الموافقة على حسابك قبل الوصول إلى ميزات المدرب."
+              : "Your account is under review. An administrator must approve your account before you can access instructor features."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

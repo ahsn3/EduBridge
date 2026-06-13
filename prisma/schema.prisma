@@ -47,6 +47,30 @@ enum AttendanceStatus {
   EXCUSED
 }
 
+enum RecordStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum ContentFileType {
+  PDF
+  PPT
+  DOCX
+  VIDEO
+  IMAGE
+  LINK
+  ASSIGNMENT
+}
+
+enum InstructorApprovalStatus {
+  PROFILE_INCOMPLETE
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  INFO_REQUESTED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -79,6 +103,9 @@ model User {
   quizAttempts  QuizAttempt[]
   certificates  Certificate[]
   announcements Announcement[] @relation("AnnouncementAuthor")
+  instructorProfile InstructorProfile?
+  uploadedFiles   ContentFile[]  @relation("UploadedFiles")
+  passwordResets  PasswordReset[]
 
   @@map("users")
 }
@@ -167,11 +194,15 @@ model Course {
   duration     Int      @default(0)
   instructorId String
   categoryId   String?
+  subjectId    String?
+  isFeatured   Boolean  @default(false)
+  tags         String[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   instructor    User           @relation("InstructorCourses", fields: [instructorId], references: [id])
   category      Category?      @relation(fields: [categoryId], references: [id])
+  subject       Subject?       @relation(fields: [subjectId], references: [id])
   enrollments   Enrollment[]
   liveSessions  LiveSession[]
   materials     Material[]
@@ -179,6 +210,7 @@ model Course {
   quizzes       Quiz[]
   announcements Announcement[]
   certificates  Certificate[]
+  contentFiles  ContentFile[]
 
   @@map("courses")
 }
@@ -447,4 +479,151 @@ model PricingPlan {
   createdAt   DateTime @default(now())
 
   @@map("pricing_plans")
+}
+
+model University {
+  id        String       @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  slug      String       @unique
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  faculties Faculty[]
+
+  @@map("universities")
+}
+
+model Faculty {
+  id           String       @id @default(cuid())
+  universityId String
+  nameAr       String
+  nameEn       String
+  slug         String
+  status       RecordStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  university University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  departments Department[]
+
+  @@unique([universityId, slug])
+  @@map("faculties")
+}
+
+model Department {
+  id        String       @id @default(cuid())
+  facultyId String
+  nameAr    String
+  nameEn    String
+  slug      String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  faculty       Faculty        @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  academicYears AcademicYear[]
+
+  @@unique([facultyId, slug])
+  @@map("departments")
+}
+
+model AcademicYear {
+  id           String       @id @default(cuid())
+  departmentId String
+  nameAr       String
+  nameEn       String
+  yearNumber   Int          @default(1)
+  order        Int          @default(0)
+  status       RecordStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  subjects   Subject[]
+
+  @@map("academic_years")
+}
+
+model Subject {
+  id             String       @id @default(cuid())
+  academicYearId String
+  nameAr         String
+  nameEn         String
+  slug           String
+  descriptionAr  String?
+  descriptionEn  String?
+  status         RecordStatus @default(ACTIVE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  courses      Course[]
+
+  @@unique([academicYearId, slug])
+  @@map("subjects")
+}
+
+model InstructorProfile {
+  id                 String                   @id @default(cuid())
+  userId             String                   @unique
+  universityId       String?
+  facultyId          String?
+  departmentId       String?
+  universityName     String?
+  facultyName        String?
+  departmentName     String?
+  academicPositionAr String?
+  academicPositionEn String?
+  cvUrl              String?
+  profileCompleted   Boolean                  @default(false)
+  approvalStatus     InstructorApprovalStatus @default(PROFILE_INCOMPLETE)
+  adminNotes         String?                  @db.Text
+  reviewedAt         DateTime?
+  reviewedById       String?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("instructor_profiles")
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@index([email])
+  @@map("password_resets")
+}
+
+model ContentFile {
+  id           String          @id @default(cuid())
+  courseId     String?
+  uploadedById String
+  titleAr      String
+  titleEn      String
+  fileUrl      String
+  fileType     ContentFileType @default(PDF)
+  fileSize     Int?
+  moduleName   String?
+  weekNumber   Int?
+  chapterName  String?
+  status       RecordStatus    @default(ACTIVE)
+  downloadCount Int            @default(0)
+  deletedAt    DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  course     Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  uploadedBy User    @relation("UploadedFiles", fields: [uploadedById], references: [id])
+
+  @@map("content_files")
 }

@@ -1,4 +1,4 @@
-import type { AccountStatus, Role } from "@prisma/client";
+import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -10,6 +10,8 @@ declare module "next-auth" {
       status: AccountStatus;
       avatar?: string | null;
       locale: string;
+      instructorProfileCompleted?: boolean;
+      instructorApprovalStatus?: InstructorApprovalStatus | null;
     };
   }
 

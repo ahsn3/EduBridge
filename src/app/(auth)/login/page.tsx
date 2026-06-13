@@ -54,7 +54,12 @@ export default function LoginPage() {
               <Input id="email" name="email" type="email" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t.auth.password}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t.auth.password}</Label>
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  {t.auth.forgotPassword}
+                </Link>
+              </div>
               <Input id="password" name="password" type="password" required />
             </div>
             <Button type="submit" className="w-full gradient-primary border-0" disabled={loading}>

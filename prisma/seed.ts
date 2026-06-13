@@ -581,6 +581,93 @@ async function main() {
   });
 
   await prisma.coupon.deleteMany({});
+
+  const istanbulUniversity = await prisma.university.upsert({
+    where: { slug: "istanbul-university" },
+    update: {},
+    create: {
+      nameAr: "جامعة إسطنبول",
+      nameEn: "Istanbul University",
+      slug: "istanbul-university",
+      status: "ACTIVE",
+    },
+  });
+
+  const engineeringFaculty = await prisma.faculty.upsert({
+    where: { universityId_slug: { universityId: istanbulUniversity.id, slug: "engineering" } },
+    update: {},
+    create: {
+      universityId: istanbulUniversity.id,
+      nameAr: "كلية الهندسة",
+      nameEn: "Engineering",
+      slug: "engineering",
+      status: "ACTIVE",
+    },
+  });
+
+  const computerDept = await prisma.department.upsert({
+    where: { facultyId_slug: { facultyId: engineeringFaculty.id, slug: "computer-engineering" } },
+    update: {},
+    create: {
+      facultyId: engineeringFaculty.id,
+      nameAr: "هندسة الحاسوب",
+      nameEn: "Computer Engineering",
+      slug: "computer-engineering",
+      status: "ACTIVE",
+    },
+  });
+
+  const yearLabels = [
+    { ar: "السنة الأولى", en: "Year 1", order: 1 },
+    { ar: "السنة الثانية", en: "Year 2", order: 2 },
+    { ar: "السنة الثالثة", en: "Year 3", order: 3 },
+    { ar: "السنة الرابعة", en: "Year 4", order: 4 },
+  ];
+
+  const academicYears = [];
+  for (const year of yearLabels) {
+    const existing = await prisma.academicYear.findFirst({
+      where: { departmentId: computerDept.id, order: year.order },
+    });
+    const record =
+      existing ??
+      (await prisma.academicYear.create({
+        data: {
+          departmentId: computerDept.id,
+          nameAr: year.ar,
+          nameEn: year.en,
+          yearNumber: year.order,
+          order: year.order,
+          status: "ACTIVE",
+        },
+      }));
+    academicYears.push(record);
+  }
+
+  const year1 = academicYears[0];
+  const subjects = [
+    { ar: "التفاضل والتكامل", en: "Calculus", slug: "calculus" },
+    { ar: "الفيزياء", en: "Physics", slug: "physics" },
+    { ar: "البرمجة", en: "Programming", slug: "programming" },
+  ];
+
+  for (const subject of subjects) {
+    const existing = await prisma.subject.findFirst({
+      where: { academicYearId: year1.id, slug: subject.slug },
+    });
+    if (!existing) {
+      await prisma.subject.create({
+        data: {
+          academicYearId: year1.id,
+          nameAr: subject.ar,
+          nameEn: subject.en,
+          slug: subject.slug,
+          status: "ACTIVE",
+        },
+      });
+    }
+  }
+
   await prisma.coupon.createMany({
     data: [
       { code: "WELCOME20", discountType: "percentage", discountValue: 20, maxUses: 100, isActive: true },

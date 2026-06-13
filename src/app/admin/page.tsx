@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, GraduationCap, DollarSign, BookOpen } from "lucide-react";
+import { Users, GraduationCap, DollarSign, BookOpen, FolderOpen, FileText } from "lucide-react";
 import { getAdminDashboard } from "@/actions/admin";
 import { StatCard } from "@/components/shared/stat-card";
 import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
@@ -25,6 +25,9 @@ export default async function AdminDashboardPage() {
         <StatCard title="Active Instructors" value={data.totalInstructors} icon={GraduationCap} />
         <StatCard title="Pending Instructors" value={data.pendingInstructors} icon={GraduationCap} />
         <StatCard title="Total Courses" value={data.totalCourses} icon={BookOpen} />
+        <StatCard title="Subjects" value={data.totalSubjects} icon={FolderOpen} />
+        <StatCard title="Uploaded Files" value={data.totalFiles} icon={FileText} />
+        <StatCard title="Active Users" value={data.activeUsers} icon={Users} />
         <StatCard
           title="Total Revenue"
           value={formatPrice(data.totalRevenue)}

@@ -13,7 +13,7 @@ import {
   OTP_MAX_ATTEMPTS,
   verifyOtpCode,
 } from "@/lib/otp";
-import { getDashboardPath } from "@/lib/auth-utils";
+import { getPostLoginPath } from "@/lib/auth-routing";
 import { AuthError } from "next-auth";
 import type { Prisma } from "@prisma/client";
 
@@ -178,6 +178,16 @@ export async function verifyEmailOtp(formData: FormData) {
       },
     });
 
+    if (userRole === "INSTRUCTOR") {
+      await db.instructorProfile.create({
+        data: {
+          userId: user.id,
+          approvalStatus: "PROFILE_INCOMPLETE",
+          profileCompleted: false,
+        },
+      });
+    }
+
     await db.emailOtp.delete({ where: { id: record.id } });
 
     const plainPassword = formData.get("password") as string;
@@ -201,7 +211,7 @@ export async function verifyEmailOtp(formData: FormData) {
     return {
       success: true,
       pending: user.role === "INSTRUCTOR",
-      redirectTo: getDashboardPath(user.role, user.status),
+      redirectTo: await getPostLoginPath(user.id),
       email: user.email,
       role: user.role,
     };
@@ -291,7 +301,7 @@ export async function loginUser(formData: FormData) {
 
     return {
       success: true,
-      redirectTo: getDashboardPath(user.role, user.status),
+      redirectTo: await getPostLoginPath(user.id),
       email: user.email,
       role: user.role,
     };
