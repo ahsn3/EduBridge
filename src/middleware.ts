@@ -1,7 +1,15 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
+import { getAuthSecret } from "@/lib/auth-secret";
 import { getDashboardPath, instructorNeedsProfile } from "@/lib/auth-routing";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { NextResponse } from "next/server";
+
+const { auth } = NextAuth({
+  ...authConfig,
+  secret: getAuthSecret(),
+  providers: [],
+});
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -30,7 +38,6 @@ export default auth((req) => {
     );
   }
 
-  // Instructor profile completion gate
   if (isLoggedIn && role === "INSTRUCTOR" && instructorNeedsProfile(role, status, approvalStatus, profileCompleted)) {
     if (pathname !== "/instructor/complete-profile" && !pathname.startsWith("/api/upload")) {
       return NextResponse.redirect(new URL("/instructor/complete-profile", req.url));

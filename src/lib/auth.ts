@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { getDashboardPath } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { ensureAdminUser } from "@/lib/ensure-admin-user";
+import { authConfig } from "@/lib/auth.config";
+import { getAuthSecret } from "@/lib/auth-secret";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
@@ -49,14 +51,17 @@ function resolveRole(email: string | null | undefined, role?: Role | null): Role
   return role ?? "STUDENT";
 }
 
+const secret = getAuthSecret();
+
+if (!secret && process.env.NODE_ENV === "production") {
+  console.error(
+    "CRITICAL: AUTH_SECRET is not set. Login and sessions will fail. Set AUTH_SECRET in Railway variables."
+  );
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET,
-  trustHost: true,
-  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
-  pages: {
-    signIn: "/login",
-    newUser: "/register/student",
-  },
+  ...authConfig,
+  secret,
   providers: [
     Credentials({
       id: "credentials",
@@ -95,13 +100,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const role = resolveRole(email, user.role);
-
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role,
+          role: resolveRole(email, user.role),
           status: user.status,
           avatar: user.avatar,
           locale: user.locale ?? "ar",
@@ -109,69 +112,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (user?.id) {
-        const credUser = user as {
-          id: string;
-          name?: string | null;
-          email?: string | null;
-          role?: Role;
-          status?: AccountStatus;
-          locale?: string;
-          avatar?: string | null;
-        };
-
-        const email = credUser.email ?? undefined;
-        const role = resolveRole(email, credUser.role);
-
-        return {
-          ...token,
-          sub: credUser.id,
-          id: credUser.id,
-          role,
-          status: credUser.status ?? "ACTIVE",
-          locale: credUser.locale ?? "ar",
-          name: credUser.name,
-          email,
-          picture: credUser.avatar ?? undefined,
-          instructorProfileCompleted: false,
-          instructorApprovalStatus: null,
-        };
-      }
-
-      if (trigger === "update" && session) {
-        if (session.name) token.name = session.name;
-        if (session.locale) token.locale = session.locale;
-      }
-
-      if (token.email) {
-        token.role = resolveRole(token.email, token.role);
-      }
-
-      return token;
-    },
-    async session({ session, token }) {
-      const role = resolveRole(token.email, token.role);
-
-      session.user.id = token.id ?? token.sub ?? "";
-      session.user.role = role;
-      session.user.status = (token.status as AccountStatus) ?? "ACTIVE";
-      session.user.locale = token.locale ?? "ar";
-      session.user.name = token.name ?? session.user.name ?? "";
-      session.user.email = token.email ?? session.user.email ?? "";
-      session.user.avatar = token.picture ?? null;
-      session.user.instructorProfileCompleted = token.instructorProfileCompleted ?? false;
-      session.user.instructorApprovalStatus = token.instructorApprovalStatus ?? null;
-
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      if (url.startsWith(baseUrl)) return url;
-      return `${baseUrl}/auth/redirect`;
-    },
-  },
 });
 
 export async function getSessionUser() {
