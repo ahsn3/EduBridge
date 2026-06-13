@@ -61,9 +61,8 @@ export default auth((req) => {
     }
   }
 
-  if (pathname.startsWith("/admin") && (!isLoggedIn || role !== "ADMIN" || status !== "ACTIVE")) {
-    if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
-    return NextResponse.redirect(new URL("/student", req.url));
+  if (pathname.startsWith("/admin") && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   if (pathname === "/pending-approval") {

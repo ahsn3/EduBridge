@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { Logo } from "@/components/shared/logo";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+    await signOut({ redirect: false });
     const formData = new FormData(e.currentTarget);
     const result = await loginUser(formData);
 
@@ -28,7 +30,7 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = result.redirectTo || "/student";
+    window.location.href = result.redirectTo || "/auth/redirect";
   }
 
   return (

@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { getDashboardPath } from "@/lib/auth-utils";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
+import type { JWT } from "@auth/core/jwt";
 
 declare module "next-auth" {
   interface Session {
@@ -59,6 +60,40 @@ async function loadUserAuthFields(userId: string) {
       },
     },
   });
+}
+
+async function loadUserAuthFieldsByEmail(email: string) {
+  return db.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: {
+      id: true,
+      role: true,
+      status: true,
+      locale: true,
+      name: true,
+      email: true,
+      avatar: true,
+      instructorProfile: {
+        select: { profileCompleted: true, approvalStatus: true },
+      },
+    },
+  });
+}
+
+function applyDbUserToToken(token: JWT, dbUser: NonNullable<Awaited<ReturnType<typeof loadUserAuthFields>>>) {
+  return {
+    ...token,
+    sub: dbUser.id,
+    id: dbUser.id,
+    role: dbUser.role,
+    status: dbUser.status,
+    locale: dbUser.locale,
+    name: dbUser.name,
+    email: dbUser.email,
+    picture: dbUser.avatar,
+    instructorProfileCompleted: dbUser.instructorProfile?.profileCompleted ?? false,
+    instructorApprovalStatus: dbUser.instructorProfile?.approvalStatus ?? null,
+  };
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -128,41 +163,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) {
         const dbUser = await loadUserAuthFields(user.id);
         if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-          token.status = dbUser.status;
-          token.locale = dbUser.locale;
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.picture = dbUser.avatar;
-          token.instructorProfileCompleted = dbUser.instructorProfile?.profileCompleted ?? false;
-          token.instructorApprovalStatus = dbUser.instructorProfile?.approvalStatus ?? null;
-        } else {
-          token.id = user.id;
-          token.name = user.name;
-          token.email = user.email ?? undefined;
-          token.picture =
-            "avatar" in user && user.avatar ? (user.avatar as string) : undefined;
-          if ("role" in user && user.role) token.role = user.role as Role;
-          if ("status" in user && user.status) token.status = user.status as AccountStatus;
-          if ("locale" in user && user.locale) token.locale = user.locale as string;
+          return applyDbUserToToken(token, dbUser);
         }
-        return token;
+
+        return {
+          ...token,
+          sub: user.id,
+          id: user.id,
+          name: user.name,
+          email: user.email ?? undefined,
+          picture: "avatar" in user && user.avatar ? (user.avatar as string) : undefined,
+          role: "role" in user ? (user.role as Role) : token.role,
+          status: "status" in user ? (user.status as AccountStatus) : token.status,
+          locale: "locale" in user ? (user.locale as string) : token.locale,
+        };
       }
 
-      if (token.id) {
-        const dbUser = await loadUserAuthFields(token.id);
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-          token.status = dbUser.status;
-          token.locale = dbUser.locale;
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.picture = dbUser.avatar;
-          token.instructorProfileCompleted = dbUser.instructorProfile?.profileCompleted ?? false;
-          token.instructorApprovalStatus = dbUser.instructorProfile?.approvalStatus ?? null;
-        }
+      const email = typeof token.email === "string" ? token.email : undefined;
+      const dbUser = email
+        ? await loadUserAuthFieldsByEmail(email)
+        : token.id
+          ? await loadUserAuthFields(token.id)
+          : null;
+
+      if (dbUser) {
+        return applyDbUserToToken(token, dbUser);
       }
 
       if (trigger === "update" && session) {
@@ -198,8 +223,9 @@ export async function getCurrentUser() {
   const session = await auth();
   if (!session?.user) return null;
 
+  const email = session.user.email?.toLowerCase().trim();
   const user = await db.user.findUnique({
-    where: { id: session.user.id },
+    where: email ? { email } : { id: session.user.id },
     select: {
       id: true,
       name: true,
