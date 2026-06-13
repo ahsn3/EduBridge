@@ -258,8 +258,17 @@ export async function loginUser(formData: FormData) {
       return { error: "Account is deactivated. Contact admin." };
     }
 
-    if (!user.emailVerified) {
+    if (!user.emailVerified && user.role !== "ADMIN") {
       return { error: "Please verify your email before signing in." };
+    }
+
+    if (!user.password) {
+      return { error: "Invalid email or password" };
+    }
+
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return { error: "Invalid email or password" };
     }
 
     await signIn("credentials", {

@@ -75,7 +75,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        if (!user.emailVerified) {
+        if (!user.emailVerified && user.role !== "ADMIN") {
+          return null;
+        }
+
+        if (!user.password) {
           return null;
         }
 
