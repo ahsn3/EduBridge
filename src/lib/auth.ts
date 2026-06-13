@@ -6,7 +6,7 @@ import { getDashboardPath } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { ensureAdminUser } from "@/lib/ensure-admin-user";
 import { authConfig } from "@/lib/auth.config";
-import { getAuthSecret } from "@/lib/auth-secret";
+import { getAuthSecret, isAuthSecretExplicit } from "@/lib/auth-secret";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
@@ -53,9 +53,9 @@ function resolveRole(email: string | null | undefined, role?: Role | null): Role
 
 const secret = getAuthSecret();
 
-if (!secret && process.env.NODE_ENV === "production") {
-  console.error(
-    "CRITICAL: AUTH_SECRET is not set. Login and sessions will fail. Set AUTH_SECRET in Railway variables."
+if (!isAuthSecretExplicit() && process.env.NODE_ENV === "production") {
+  console.warn(
+    "Using derived AUTH_SECRET. Set AUTH_SECRET in Railway variables for production hardening."
   );
 }
 

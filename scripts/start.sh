@@ -4,11 +4,12 @@
 echo "==> EduBridge booting on port ${PORT:-3000}"
 
 if [ -z "$AUTH_SECRET" ] && [ -z "$NEXTAUTH_SECRET" ]; then
-  echo "==> CRITICAL: AUTH_SECRET is not set — login and sessions will NOT work"
-  echo "==> Set AUTH_SECRET in Railway (run: openssl rand -base64 32)"
+  echo "==> AUTH_SECRET not set — app will derive a stable secret from DATABASE_URL"
 else
   echo "==> AUTH_SECRET is configured"
 fi
+
+export AUTH_TRUST_HOST="${AUTH_TRUST_HOST:-true}"
 
 if [ -z "$AUTH_URL" ] && [ -z "$NEXTAUTH_URL" ] && [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
   export AUTH_URL="https://${RAILWAY_PUBLIC_DOMAIN}"

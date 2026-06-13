@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthSecret, isAuthConfigured } from "@/lib/auth-secret";
+import { getAuthSecret, isAuthConfigured, isAuthSecretExplicit } from "@/lib/auth-secret";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +16,10 @@ export async function GET() {
     status: "ok",
     timestamp: Date.now(),
     authSecretConfigured: isAuthConfigured(),
-    authSecretLength: secret?.length ?? 0,
+    authSecretExplicit: isAuthSecretExplicit(),
+    authSecretLength: secret.length,
     authUrl,
-    trustHost: process.env.AUTH_TRUST_HOST ?? null,
+    trustHost: process.env.AUTH_TRUST_HOST ?? "true",
     nodeEnv: process.env.NODE_ENV ?? null,
   });
 }
