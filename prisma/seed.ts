@@ -10,9 +10,9 @@ async function main() {
   const ahmedAdminPassword = await bcrypt.hash("Ahmed123", 12);
   const drazAdminPassword = await bcrypt.hash("Draz123", 12);
 
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "admin@edubridge.com" },
-    update: { status: "ACTIVE", role: "ADMIN" },
+    update: { status: "ACTIVE", role: "ADMIN", emailVerified: new Date() },
     create: {
       name: "System Admin",
       nameAr: "مدير النظام",
@@ -21,6 +21,7 @@ async function main() {
       password,
       role: "ADMIN",
       status: "ACTIVE",
+      emailVerified: new Date(),
       referralCode: "ADM001",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
     },
@@ -28,7 +29,12 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "ahmed@admin.com" },
-    update: { status: "ACTIVE", role: "ADMIN", password: ahmedAdminPassword },
+    update: {
+      status: "ACTIVE",
+      role: "ADMIN",
+      password: ahmedAdminPassword,
+      emailVerified: new Date(),
+    },
     create: {
       name: "Ahmed Admin",
       nameAr: "أحمد - مدير",
@@ -37,6 +43,7 @@ async function main() {
       password: ahmedAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
+      emailVerified: new Date(),
       referralCode: "ADM002",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
     },
@@ -44,7 +51,12 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "draz@admin.com" },
-    update: { status: "ACTIVE", role: "ADMIN", password: drazAdminPassword },
+    update: {
+      status: "ACTIVE",
+      role: "ADMIN",
+      password: drazAdminPassword,
+      emailVerified: new Date(),
+    },
     create: {
       name: "Draz Admin",
       nameAr: "دراز - مدير",
@@ -53,6 +65,7 @@ async function main() {
       password: drazAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
+      emailVerified: new Date(),
       referralCode: "ADM003",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
     },
