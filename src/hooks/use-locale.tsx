@@ -8,12 +8,22 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   type Locale,
   getTranslation,
   type TranslationKey,
 } from "@/lib/i18n/translations";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+
+const LOCALE_COOKIE = "locale";
+
+function persistLocale(newLocale: Locale) {
+  localStorage.setItem(LOCALE_COOKIE, newLocale);
+  document.cookie = `${LOCALE_COOKIE}=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
+  document.documentElement.lang = newLocale;
+  document.documentElement.dir = newLocale === "ar" ? "rtl" : "ltr";
+}
 
 interface LocaleContextType {
   locale: Locale;
@@ -32,25 +42,30 @@ export function LocaleProvider({
   children: ReactNode;
   initialLocale?: Locale;
 }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    const saved = localStorage.getItem("locale") as Locale | null;
+    const saved = localStorage.getItem(LOCALE_COOKIE) as Locale | null;
     if (saved && (saved === "ar" || saved === "en")) {
       setLocaleState(saved);
+      persistLocale(saved);
+    } else {
+      persistLocale(initialLocale);
     }
-  }, []);
+  }, [initialLocale]);
 
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem("locale", newLocale);
-    document.documentElement.lang = newLocale;
-    document.documentElement.dir = newLocale === "ar" ? "rtl" : "ltr";
-  }, []);
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      setLocaleState(newLocale);
+      persistLocale(newLocale);
+      router.refresh();
+    },
+    [router]
+  );
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    persistLocale(locale);
   }, [locale]);
 
   const value: LocaleContextType = {

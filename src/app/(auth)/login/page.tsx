@@ -29,7 +29,7 @@ export default function LoginPage() {
       const validated = await validateLoginCredentials(formData);
 
       if (validated.error || !validated.success) {
-        toast.error(validated.error || "Invalid email or password");
+        toast.error(validated.error || t.common.invalidCredentials);
         return;
       }
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        toast.error("Invalid email or password");
+        toast.error(t.common.invalidCredentials);
         return;
       }
 

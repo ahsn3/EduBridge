@@ -71,7 +71,7 @@ export function DashboardShell({
             : isRtl ? "lg:mr-64" : "lg:ml-64"
         )}
       >
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto">{children}</div>
+        <div className="p-4 lg:p-6 max-w-7xl mx-auto animate-fade-in">{children}</div>
       </main>
 
       {showMobileNav && <MobileBottomNav navItems={navItems.slice(0, 5)} />}

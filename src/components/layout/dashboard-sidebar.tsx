@@ -70,16 +70,10 @@ export function DashboardSidebar({
   const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "";
   const isAdmin = session?.user?.role === "ADMIN";
   const roleLabel = isAdmin
-    ? locale === "ar"
-      ? "مدير"
-      : "Manager"
+    ? t.roles.manager
     : session?.user?.role === "INSTRUCTOR"
-      ? locale === "ar"
-        ? "مدرب"
-        : "Instructor"
-      : locale === "ar"
-        ? "طالب"
-        : "Student";
+      ? t.roles.instructor
+      : t.roles.student;
 
   const getLabel = (labelKey: string) => {
     const nav = t.nav as Record<string, string>;
@@ -141,7 +135,7 @@ export function DashboardSidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -175,7 +169,7 @@ export function DashboardSidebar({
           </div>
           {isAdmin && (
             <Badge className="mt-2 w-full justify-center text-[10px] gradient-primary border-0">
-              {locale === "ar" ? "لوحة الإدارة" : "Admin Panel"}
+              {t.roles.adminPanel}
             </Badge>
           )}
         </div>

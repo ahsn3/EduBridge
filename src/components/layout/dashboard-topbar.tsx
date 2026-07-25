@@ -42,16 +42,10 @@ export function DashboardTopbar({
   const isAdmin = session?.user?.role === "ADMIN";
   const isInstructor = session?.user?.role === "INSTRUCTOR";
   const roleLabel = isAdmin
-    ? locale === "ar"
-      ? "مدير"
-      : "Administrator"
+    ? t.roles.manager
     : isInstructor
-      ? locale === "ar"
-        ? "مدرب"
-        : "Instructor"
-      : locale === "ar"
-        ? "طالب"
-        : "Student";
+      ? t.roles.instructor
+      : t.roles.student;
 
   const notificationsPath = settingsPath.includes("/settings")
     ? settingsPath.replace("/settings", "/notifications")

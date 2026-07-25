@@ -51,6 +51,7 @@ async function upsertAdmin(admin) {
       role: "ADMIN",
       status: "ACTIVE",
       emailVerified: verified,
+      avatar: null,
     },
     create: {
       name: admin.name,
@@ -62,7 +63,6 @@ async function upsertAdmin(admin) {
       status: "ACTIVE",
       emailVerified: verified,
       referralCode: admin.referralCode,
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
     },
   });
 
@@ -81,6 +81,7 @@ async function upsertStudent(student) {
       role: "STUDENT",
       status: "ACTIVE",
       emailVerified: verified,
+      avatar: null,
     },
     create: {
       name: student.name,
@@ -92,7 +93,6 @@ async function upsertStudent(student) {
       status: "ACTIVE",
       emailVerified: verified,
       referralCode: student.referralCode,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
     },
   });
 
@@ -110,6 +110,7 @@ async function upsertInstructor(instructor) {
       role: "INSTRUCTOR",
       status: "ACTIVE",
       emailVerified: verified,
+      avatar: null,
     },
     create: {
       name: instructor.name,
@@ -121,7 +122,6 @@ async function upsertInstructor(instructor) {
       status: "ACTIVE",
       emailVerified: verified,
       referralCode: instructor.referralCode,
-      avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
     },
   });
 
