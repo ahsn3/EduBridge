@@ -55,6 +55,8 @@
   --border: #e2e8f0;
   --input: #e2e8f0;
   --ring: #4f46e5;
+  --primary-glow: rgba(79, 70, 229, 0.35);
+  --surface-hover: rgba(79, 70, 229, 0.08);
 }
 
 .dark {
@@ -77,6 +79,8 @@
   --border: #334155;
   --input: #334155;
   --ring: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.4);
+  --surface-hover: rgba(99, 102, 241, 0.12);
 }
 
 @layer base {
@@ -112,7 +116,12 @@
   }
 
   .gradient-primary {
-    @apply bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500;
+    @apply bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500 transition-all duration-200;
+  }
+
+  .gradient-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 10px 25px -5px var(--primary-glow);
   }
 
   .gradient-text {
@@ -120,7 +129,21 @@
   }
 
   .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .interactive-surface {
+    @apply transition-all duration-200 ease-out hover:bg-[var(--surface-hover)];
+  }
+
+  .dropdown-panel {
+    @apply rounded-xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-xl;
+  }
+
+  .menu-item {
+    @apply cursor-pointer rounded-lg px-2.5 py-2 text-sm outline-none transition-all duration-150;
+    @apply data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary;
+    @apply focus-visible:bg-primary/10 focus-visible:text-primary;
   }
 
   .animate-fade-in {

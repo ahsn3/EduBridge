@@ -37,7 +37,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-muted-foreground transition-all duration-200 hover:text-primary relative after:absolute after:-bottom-1 after:start-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-200 hover:after:w-full"
             >
               {getNavLabel(link.labelKey)}
             </a>

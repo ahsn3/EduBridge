@@ -66,7 +66,7 @@ export function DashboardTopbar({
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden rounded-xl hover:bg-primary/10 hover:text-primary"
             onClick={onMenuClick}
           >
             <Menu className="h-5 w-5" />
@@ -87,7 +87,7 @@ export function DashboardTopbar({
           <ThemeToggle />
 
           {notificationsPath && (
-            <Button variant="ghost" size="icon" className="relative rounded-xl" asChild>
+            <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-primary/10 hover:text-primary" asChild>
               <Link href={notificationsPath}>
                 <Bell className="h-4 w-4" />
                 {notificationCount > 0 && (
@@ -101,7 +101,10 @@ export function DashboardTopbar({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 rounded-xl px-2 max-w-[220px]">
+              <Button
+                variant="ghost"
+                className="gap-2 rounded-xl px-2 max-w-[220px] hover:bg-primary/10 data-[state=open]:bg-primary/10"
+              >
                 <Avatar className="h-9 w-9 ring-2 ring-primary/10">
                   <AvatarImage src={session?.user?.avatar || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -120,7 +123,7 @@ export function DashboardTopbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <div className="px-3 py-2 border-b mb-1">
+              <div className="px-3 py-2.5 border-b border-border/60 mb-1">
                 <p className="font-semibold text-sm truncate">{userName}</p>
                 <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
                 {isAdmin && (

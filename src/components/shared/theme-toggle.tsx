@@ -13,7 +13,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="rounded-xl"
+      className="rounded-xl hover:bg-primary/10 hover:text-primary"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       title={theme === "dark" ? t.common.lightMode : t.common.darkMode}
     >
