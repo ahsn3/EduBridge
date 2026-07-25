@@ -5,37 +5,29 @@ const prisma = new PrismaClient();
 
 const ADMINS = [
   {
-    email: "ahmed@admin.com",
+    email: "ahmed@edubridge.com",
     password: "Ahmed123",
     name: "Ahmed Admin",
     nameAr: "أحمد - مدير",
     nameEn: "Ahmed Admin",
-    referralCode: "ADM002",
+    referralCode: "ADM001",
   },
   {
-    email: "draz@admin.com",
+    email: "draz@edubridge.com",
     password: "Draz123",
     name: "Draz Admin",
     nameAr: "دراز - مدير",
     nameEn: "Draz Admin",
-    referralCode: "ADM003",
+    referralCode: "ADM002",
   },
-  {
-    email: "admin@edubridge.com",
-    password: "password123",
-    name: "System Admin",
-    nameAr: "مدير النظام",
-    nameEn: "System Admin",
-    referralCode: "ADM001",
-  },
-] as const;
+];
 
 async function main() {
   const verified = new Date();
 
   for (const admin of ADMINS) {
     const hashed = await bcrypt.hash(admin.password, 12);
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: admin.email },
       update: {
         password: hashed,
@@ -56,7 +48,9 @@ async function main() {
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
       },
     });
-    console.log(`✓ Admin ready: ${admin.email}`);
+
+    await prisma.instructorProfile.deleteMany({ where: { userId: user.id } });
+    console.log(`Admin ready: ${user.email}`);
   }
 }
 

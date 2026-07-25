@@ -6,29 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
-  const password = await bcrypt.hash("password123", 12);
   const ahmedAdminPassword = await bcrypt.hash("Ahmed123", 12);
   const drazAdminPassword = await bcrypt.hash("Draz123", 12);
+  const studentPassword = await bcrypt.hash("Student123", 12);
+  const instructorPassword = await bcrypt.hash("Instructor123", 12);
+  const password = await bcrypt.hash("password123", 12);
 
   await prisma.user.upsert({
-    where: { email: "admin@edubridge.com" },
-    update: { status: "ACTIVE", role: "ADMIN", emailVerified: new Date() },
-    create: {
-      name: "System Admin",
-      nameAr: "مدير النظام",
-      nameEn: "System Admin",
-      email: "admin@edubridge.com",
-      password,
-      role: "ADMIN",
-      status: "ACTIVE",
-      emailVerified: new Date(),
-      referralCode: "ADM001",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "ahmed@admin.com" },
+    where: { email: "ahmed@edubridge.com" },
     update: {
       status: "ACTIVE",
       role: "ADMIN",
@@ -39,18 +24,18 @@ async function main() {
       name: "Ahmed Admin",
       nameAr: "أحمد - مدير",
       nameEn: "Ahmed Admin",
-      email: "ahmed@admin.com",
+      email: "ahmed@edubridge.com",
       password: ahmedAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
       emailVerified: new Date(),
-      referralCode: "ADM002",
+      referralCode: "ADM001",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
     },
   });
 
   await prisma.user.upsert({
-    where: { email: "draz@admin.com" },
+    where: { email: "draz@edubridge.com" },
     update: {
       status: "ACTIVE",
       role: "ADMIN",
@@ -61,12 +46,12 @@ async function main() {
       name: "Draz Admin",
       nameAr: "دراز - مدير",
       nameEn: "Draz Admin",
-      email: "draz@admin.com",
+      email: "draz@edubridge.com",
       password: drazAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
       emailVerified: new Date(),
-      referralCode: "ADM003",
+      referralCode: "ADM002",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
     },
   });
@@ -131,17 +116,60 @@ async function main() {
 
   const student1 = await prisma.user.upsert({
     where: { email: "student@edubridge.com" },
-    update: { status: "ACTIVE", role: "STUDENT" },
+    update: { status: "ACTIVE", role: "STUDENT", password: studentPassword, emailVerified: new Date() },
     create: {
-      name: "Mohammed Ali",
-      nameAr: "محمد علي",
-      nameEn: "Mohammed Ali",
+      name: "Demo Student",
+      nameAr: "طالب تجريبي",
+      nameEn: "Demo Student",
       email: "student@edubridge.com",
-      password,
+      password: studentPassword,
       role: "STUDENT",
       status: "ACTIVE",
-      referralCode: "MOH001",
+      emailVerified: new Date(),
+      referralCode: "STU001",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
+    },
+  });
+
+  const defaultInstructor = await prisma.user.upsert({
+    where: { email: "instructor@edubridge.com" },
+    update: { status: "ACTIVE", role: "INSTRUCTOR", password: instructorPassword, emailVerified: new Date() },
+    create: {
+      name: "Demo Instructor",
+      nameAr: "مدرب تجريبي",
+      nameEn: "Demo Instructor",
+      email: "instructor@edubridge.com",
+      password: instructorPassword,
+      role: "INSTRUCTOR",
+      status: "ACTIVE",
+      emailVerified: new Date(),
+      referralCode: "INS001",
+      avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
+    },
+  });
+
+  await prisma.instructorProfile.upsert({
+    where: { userId: defaultInstructor.id },
+    update: {
+      profileCompleted: true,
+      approvalStatus: "APPROVED",
+      academicPositionAr: "أستاذ مساعد",
+      academicPositionEn: "Assistant Professor",
+      universityName: "EduBridge University",
+      facultyName: "Engineering",
+      departmentName: "General",
+      cvUrl: "/uploads/demo-cv.pdf",
+    },
+    create: {
+      userId: defaultInstructor.id,
+      profileCompleted: true,
+      approvalStatus: "APPROVED",
+      academicPositionAr: "أستاذ مساعد",
+      academicPositionEn: "Assistant Professor",
+      universityName: "EduBridge University",
+      facultyName: "Engineering",
+      departmentName: "General",
+      cvUrl: "/uploads/demo-cv.pdf",
     },
   });
 
@@ -676,17 +704,14 @@ async function main() {
   });
 
   console.log("✅ Seed completed!");
-  console.log("\n📧 Demo Accounts (password: password123):");
-  console.log("  Admin:      admin@edubridge.com");
-  console.log("  Instructors:");
-  console.log("    ahmed.hassan.bme@gmail.com  (Biomedical)");
-  console.log("    sara.mohammed.cs@gmail.com  (Software/Computer)");
-  console.log("    omar.kaya.aero@gmail.com    (Aerospace)");
-  console.log("  Students:");
-  console.log("    student@edubridge.com");
-  console.log("    fatima@edubridge.com");
-  console.log("    youssef.engineering@gmail.com");
-  console.log("\n💡 Update instructor emails in prisma/seed.ts to your real Gmail for Google Sign-In.");
+  console.log("\n📧 Default Accounts:");
+  console.log("  Managers:");
+  console.log("    ahmed@edubridge.com  / Ahmed123");
+  console.log("    draz@edubridge.com   / Draz123");
+  console.log("  Student:");
+  console.log("    student@edubridge.com / Student123");
+  console.log("  Instructor:");
+  console.log("    instructor@edubridge.com / Instructor123");
 }
 
 main()

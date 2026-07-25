@@ -4,28 +4,20 @@ import bcrypt from "bcryptjs";
 
 const ADMINS = [
   {
-    email: "ahmed@admin.com",
+    email: "ahmed@edubridge.com",
     password: "Ahmed123",
     name: "Ahmed Admin",
     nameAr: "أحمد - مدير",
     nameEn: "Ahmed Admin",
-    referralCode: "ADM002",
+    referralCode: "ADM001",
   },
   {
-    email: "draz@admin.com",
+    email: "draz@edubridge.com",
     password: "Draz123",
     name: "Draz Admin",
     nameAr: "دراز - مدير",
     nameEn: "Draz Admin",
-    referralCode: "ADM003",
-  },
-  {
-    email: "admin@edubridge.com",
-    password: "password123",
-    name: "System Admin",
-    nameAr: "مدير النظام",
-    nameEn: "System Admin",
-    referralCode: "ADM001",
+    referralCode: "ADM002",
   },
 ];
 

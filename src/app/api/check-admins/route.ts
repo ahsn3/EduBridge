@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-const ADMIN_EMAILS = ["ahmed@admin.com", "draz@admin.com", "admin@edubridge.com"];
+const ADMIN_EMAILS = ["ahmed@edubridge.com", "draz@edubridge.com"];
 
 export async function GET(req: Request) {
   const key = new URL(req.url).searchParams.get("key");
