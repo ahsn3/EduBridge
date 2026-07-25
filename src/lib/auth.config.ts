@@ -49,15 +49,23 @@ export const authConfig = {
       }
 
       if (trigger === "update" && session) {
-        if (session.name) token.name = session.name;
-        if (session.locale) token.locale = session.locale;
-        if (session.status) token.status = session.status;
-        if (session.role) token.role = session.role;
-        if (typeof session.instructorProfileCompleted === "boolean") {
-          token.instructorProfileCompleted = session.instructorProfileCompleted;
+        const update = session as {
+          name?: string;
+          locale?: string;
+          status?: AccountStatus;
+          role?: Role;
+          instructorProfileCompleted?: boolean;
+          instructorApprovalStatus?: InstructorApprovalStatus | null;
+        };
+        if (update.name) token.name = update.name;
+        if (update.locale) token.locale = update.locale;
+        if (update.status) token.status = update.status;
+        if (update.role) token.role = update.role;
+        if (typeof update.instructorProfileCompleted === "boolean") {
+          token.instructorProfileCompleted = update.instructorProfileCompleted;
         }
-        if (session.instructorApprovalStatus !== undefined) {
-          token.instructorApprovalStatus = session.instructorApprovalStatus;
+        if (update.instructorApprovalStatus !== undefined) {
+          token.instructorApprovalStatus = update.instructorApprovalStatus;
         }
       }
 
