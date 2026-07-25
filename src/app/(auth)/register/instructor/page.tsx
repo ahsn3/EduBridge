@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/shared/logo";
-import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,11 +44,7 @@ export default function InstructorRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-      <div className="absolute top-4 end-4">
-        <LanguageSwitcher />
-      </div>
-      <Card className="w-full max-w-md shadow-xl">
+    <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="text-center space-y-2">
           <Logo variant="full" className="justify-center mb-2" />
           <CardTitle className="text-2xl">{t.auth.instructorRegisterTitle}</CardTitle>
@@ -90,6 +85,5 @@ export default function InstructorRegisterPage() {
           </p>
         </CardContent>
       </Card>
-    </div>
   );
 }

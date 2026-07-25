@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/components/shared/logo";
-import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ type University = Awaited<ReturnType<typeof getAcademicOptions>>[number];
 
 export default function CompleteInstructorProfilePage() {
   const { t, locale } = useLocale();
+  const { update } = useSession();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cvUrl, setCvUrl] = useState("");
@@ -63,14 +64,16 @@ export default function CompleteInstructorProfilePage() {
     fd.set("departmentId", deptId);
     const result = await completeInstructorProfile(fd);
     if (result.error) toast.error(result.error);
-    else window.location.href = result.redirectTo || "/pending-approval";
+    else {
+      await update();
+      window.location.href = result.redirectTo || "/pending-approval";
+    }
     setLoading(false);
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-      <div className="absolute top-4 end-4"><LanguageSwitcher /></div>
-      <Card className="w-full max-w-2xl shadow-xl">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl shadow-xl border-0">
         <CardHeader>
           <Logo variant="full" className="justify-center mb-2" />
           <CardTitle className="text-center text-2xl">

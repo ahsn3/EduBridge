@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ADMIN_NAV } from "@/lib/constants";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { getDashboardPath } from "@/lib/auth-routing";
 import { isAdminEmail } from "@/lib/admin-emails";
 
@@ -12,17 +12,14 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const user = await getCurrentUser();
 
-  if (!session?.user?.email) {
+  if (!user) {
     redirect("/login");
   }
 
-  const role = isAdminEmail(session.user.email) ? "ADMIN" : session.user.role;
-  const status = session.user.status ?? "ACTIVE";
-
-  if (status !== "ACTIVE" || role !== "ADMIN") {
-    redirect(getDashboardPath(role, status));
+  if (user.status !== "ACTIVE" || (!isAdminEmail(user.email) && user.role !== "ADMIN")) {
+    redirect(getDashboardPath(user.role, user.status));
   }
 
   return (

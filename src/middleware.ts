@@ -71,8 +71,19 @@ export default auth((req) => {
     }
   }
 
-  if (pathname.startsWith("/admin") && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  if (pathname.startsWith("/admin")) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (!isAdmin) {
+      if (role === "INSTRUCTOR") {
+        return NextResponse.redirect(new URL(getDashboardPath(role, status, profileCompleted), req.url));
+      }
+      if (role === "STUDENT") {
+        return NextResponse.redirect(new URL("/student", req.url));
+      }
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
   if (pathname === "/pending-approval") {

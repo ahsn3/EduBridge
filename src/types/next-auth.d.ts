@@ -31,6 +31,8 @@ declare module "@auth/core/jwt" {
     name?: string | null;
     email?: string | null;
     picture?: string | null;
+    instructorProfileCompleted?: boolean;
+    instructorApprovalStatus?: InstructorApprovalStatus | null;
   }
 }
 

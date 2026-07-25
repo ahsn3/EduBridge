@@ -2,17 +2,14 @@
 
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/admin-emails";
 import { notifyUser } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 import type { AccountStatus } from "@prisma/client";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user) return null;
-  if (user.status !== "ACTIVE") return null;
-  if (isAdminEmail(user.email) || user.role === "ADMIN") return user;
-  return null;
+  if (!user || user.role !== "ADMIN" || user.status !== "ACTIVE") return null;
+  return user;
 }
 
 export async function getAdminDashboard() {

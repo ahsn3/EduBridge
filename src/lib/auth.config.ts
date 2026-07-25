@@ -26,6 +26,8 @@ export const authConfig = {
           status?: AccountStatus;
           locale?: string;
           avatar?: string | null;
+          instructorProfileCompleted?: boolean;
+          instructorApprovalStatus?: InstructorApprovalStatus | null;
         };
 
         const email = credUser.email ?? undefined;
@@ -36,23 +38,34 @@ export const authConfig = {
           sub: credUser.id,
           id: credUser.id,
           role,
-          status: credUser.status ?? "ACTIVE",
+          status: role === "ADMIN" ? "ACTIVE" : (credUser.status ?? "ACTIVE"),
           locale: credUser.locale ?? "ar",
           name: credUser.name,
           email,
           picture: credUser.avatar ?? undefined,
-          instructorProfileCompleted: false,
-          instructorApprovalStatus: null,
+          instructorProfileCompleted: credUser.instructorProfileCompleted ?? false,
+          instructorApprovalStatus: credUser.instructorApprovalStatus ?? null,
         };
       }
 
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
         if (session.locale) token.locale = session.locale;
+        if (session.status) token.status = session.status;
+        if (session.role) token.role = session.role;
+        if (typeof session.instructorProfileCompleted === "boolean") {
+          token.instructorProfileCompleted = session.instructorProfileCompleted;
+        }
+        if (session.instructorApprovalStatus !== undefined) {
+          token.instructorApprovalStatus = session.instructorApprovalStatus;
+        }
       }
 
       if (token.email) {
         token.role = resolveRole(token.email as string, token.role as Role);
+        if (token.role === "ADMIN") {
+          token.status = "ACTIVE";
+        }
       }
 
       return token;
@@ -62,7 +75,9 @@ export const authConfig = {
 
       session.user.id = (token.id as string) ?? (token.sub as string) ?? "";
       session.user.role = role;
-      session.user.status = ((token.status as AccountStatus) ?? "ACTIVE");
+      session.user.status = role === "ADMIN"
+        ? "ACTIVE"
+        : ((token.status as AccountStatus) ?? "ACTIVE");
       session.user.locale = (token.locale as string) ?? "ar";
       session.user.name = (token.name as string) ?? session.user.name ?? "";
       session.user.email = (token.email as string) ?? session.user.email ?? "";

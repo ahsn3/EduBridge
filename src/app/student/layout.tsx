@@ -3,6 +3,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { STUDENT_NAV } from "@/lib/constants";
 import { getStudentDashboard } from "@/actions/student";
 import { getCurrentUser } from "@/lib/auth";
+import { getDashboardPath } from "@/lib/auth-routing";
 import { isAdminEmail } from "@/lib/admin-emails";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +15,16 @@ export default async function StudentLayout({
 }) {
   const user = await getCurrentUser();
 
-  if (user && (isAdminEmail(user.email) || user.role === "ADMIN")) {
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (isAdminEmail(user.email) || user.role === "ADMIN") {
     redirect("/admin");
+  }
+
+  if (user.role !== "STUDENT" || user.status !== "ACTIVE") {
+    redirect(getDashboardPath(user.role, user.status));
   }
 
   const data = await getStudentDashboard();

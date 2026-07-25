@@ -84,8 +84,7 @@ function VerifyEmailForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-      <Card className="w-full max-w-md shadow-xl">
+    <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="text-center space-y-2">
           <Logo variant="full" className="justify-center mb-2" />
           <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -135,13 +134,12 @@ function VerifyEmailForm() {
           </p>
         </CardContent>
       </Card>
-    </div>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center">Loading...</div>}>
       <VerifyEmailForm />
     </Suspense>
   );

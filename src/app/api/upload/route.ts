@@ -2,12 +2,23 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { auth } from "@/lib/auth";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED = ["application/pdf"];
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = session.user.role;
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 

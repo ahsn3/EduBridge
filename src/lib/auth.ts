@@ -7,6 +7,7 @@ import { isAdminEmail } from "@/lib/admin-emails";
 import { ensureAdminUser } from "@/lib/ensure-admin-user";
 import { authConfig } from "@/lib/auth.config";
 import { getAuthSecret, isAuthSecretExplicit } from "@/lib/auth-secret";
+import { getSessionUserFields } from "@/lib/session-user-fields";
 import type { AccountStatus, InstructorApprovalStatus, Role } from "@prisma/client";
 
 declare module "next-auth" {
@@ -29,6 +30,8 @@ declare module "next-auth" {
     status: AccountStatus;
     locale: string;
     avatar?: string | null;
+    instructorProfileCompleted?: boolean;
+    instructorApprovalStatus?: InstructorApprovalStatus | null;
   }
 }
 
@@ -62,6 +65,32 @@ if (!isAuthSecretExplicit() && process.env.NODE_ENV === "production") {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   secret,
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user, trigger, session }) {
+      const baseToken = authConfig.callbacks.jwt({ token, user, trigger, session });
+
+      if (trigger === "update") {
+        const userId = (baseToken.sub as string) ?? (baseToken.id as string);
+        if (userId) {
+          const fields = await getSessionUserFields(userId);
+          if (fields) {
+            baseToken.id = fields.id;
+            baseToken.role = fields.role;
+            baseToken.status = fields.status;
+            baseToken.locale = fields.locale;
+            baseToken.name = fields.name;
+            baseToken.email = fields.email;
+            baseToken.picture = fields.picture ?? undefined;
+            baseToken.instructorProfileCompleted = fields.instructorProfileCompleted;
+            baseToken.instructorApprovalStatus = fields.instructorApprovalStatus;
+          }
+        }
+      }
+
+      return baseToken;
+    },
+  },
   providers: [
     Credentials({
       id: "credentials",
@@ -81,7 +110,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await ensureAdminUser(email);
         }
 
-        const user = await db.user.findUnique({ where: { email } });
+        const user = await db.user.findUnique({
+          where: { email },
+          include: {
+            instructorProfile: {
+              select: {
+                profileCompleted: true,
+                approvalStatus: true,
+              },
+            },
+          },
+        });
 
         if (!user?.password || user.status === "INACTIVE") {
           return null;
@@ -100,14 +139,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const role = resolveRole(email, user.role);
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: resolveRole(email, user.role),
-          status: user.status,
+          role,
+          status: role === "ADMIN" ? "ACTIVE" : user.status,
           avatar: user.avatar,
           locale: user.locale ?? "ar",
+          instructorProfileCompleted: user.instructorProfile?.profileCompleted ?? false,
+          instructorApprovalStatus: user.instructorProfile?.approvalStatus ?? null,
         };
       },
     }),

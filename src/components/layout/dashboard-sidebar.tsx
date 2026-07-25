@@ -71,8 +71,8 @@ export function DashboardSidebar({
   const isAdmin = session?.user?.role === "ADMIN";
   const roleLabel = isAdmin
     ? locale === "ar"
-      ? "مدير النظام"
-      : "Administrator"
+      ? "مدير"
+      : "Manager"
     : session?.user?.role === "INSTRUCTOR"
       ? locale === "ar"
         ? "مدرب"

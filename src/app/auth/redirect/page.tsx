@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { getDashboardPath } from "@/lib/auth-utils";
-import { isAdminEmail } from "@/lib/admin-emails";
+import { getDashboardPathFromSession } from "@/lib/auth-utils";
 
 export default function AuthRedirectPage() {
   const { data: session, status } = useSession();
@@ -18,9 +17,7 @@ export default function AuthRedirectPage() {
       return;
     }
 
-    const role = isAdminEmail(session.user.email) ? "ADMIN" : session.user.role;
-    const path = getDashboardPath(role, session.user.status ?? "ACTIVE");
-    router.replace(path);
+    router.replace(getDashboardPathFromSession(session.user));
   }, [session, status, router]);
 
   return (

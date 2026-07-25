@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useLocale } from "@/hooks/use-locale";
 import { NAV_LINKS } from "@/lib/constants";
-import { getDashboardPath } from "@/lib/auth-utils";
+import { getDashboardPathFromSession } from "@/lib/auth-utils";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -19,7 +19,7 @@ export function Navbar() {
   const { t } = useLocale();
 
   const dashboardPath = session?.user
-    ? getDashboardPath(session.user.role, session.user.status ?? "ACTIVE")
+    ? getDashboardPathFromSession(session.user)
     : "/student";
 
   const getNavLabel = (key: string) => {
