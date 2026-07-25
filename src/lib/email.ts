@@ -1,3 +1,5 @@
+import { getEmailJsConfig } from "@/lib/email-config";
+
 const EMAILJS_API = "https://api.emailjs.com/api/v1.0/email/send";
 
 interface SendOtpEmailParams {
@@ -6,13 +8,12 @@ interface SendOtpEmailParams {
 }
 
 export async function sendOtpEmail({ email, passcode }: SendOtpEmailParams) {
-  const serviceId = process.env.EMAILJS_SERVICE_ID;
-  const templateId = process.env.EMAILJS_TEMPLATE_ID;
-  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
-  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://edu-bridge.up.railway.app";
+  const { serviceId, templateId, publicKey, privateKey, configured } =
+    getEmailJsConfig();
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://edu-bridge.up.railway.app";
 
-  if (!serviceId || !templateId || !publicKey) {
+  if (!configured || !serviceId || !templateId || !publicKey) {
     throw new Error("EmailJS is not configured");
   }
 
@@ -52,7 +53,11 @@ export async function sendOtpEmail({ email, passcode }: SendOtpEmailParams) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("EmailJS error:", response.status, errorText);
+    console.error("EmailJS error:", response.status, errorText, {
+      serviceId: `${serviceId.slice(0, 12)}…`,
+      templateId: `${templateId.slice(0, 14)}…`,
+      templateIdLength: templateId.length,
+    });
     throw new Error(`Failed to send verification email (${response.status})`);
   }
 }

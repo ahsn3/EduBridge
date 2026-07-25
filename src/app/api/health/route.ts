@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthSecret, isAuthConfigured, isAuthSecretExplicit } from "@/lib/auth-secret";
+import { getEmailJsConfigSummary } from "@/lib/email-config";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +22,6 @@ export async function GET() {
     authUrl,
     trustHost: process.env.AUTH_TRUST_HOST ?? "true",
     nodeEnv: process.env.NODE_ENV ?? null,
+    emailJs: getEmailJsConfigSummary(),
   });
 }
