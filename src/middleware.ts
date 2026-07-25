@@ -1,17 +1,26 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
-import { getAuthSecret } from "@/lib/auth-secret";
+import { getMiddlewareAuthSecret } from "@/lib/auth-secret";
 import { getDashboardPath, instructorNeedsProfile } from "@/lib/auth-routing";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { NextResponse } from "next/server";
 
 const { auth } = NextAuth({
   ...authConfig,
-  secret: getAuthSecret(),
+  secret: getMiddlewareAuthSecret(),
   providers: [],
 });
 
 export default auth((req) => {
+  try {
+    return handleAuthMiddleware(req);
+  } catch (error) {
+    console.error("Middleware auth error:", error);
+    return NextResponse.next();
+  }
+});
+
+function handleAuthMiddleware(req: Parameters<Parameters<typeof auth>[0]>[0]) {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const email = req.auth?.user?.email;
@@ -96,7 +105,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

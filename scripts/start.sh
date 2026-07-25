@@ -4,7 +4,12 @@
 echo "==> EduBridge booting on port ${PORT:-3000}"
 
 if [ -z "$AUTH_SECRET" ] && [ -z "$NEXTAUTH_SECRET" ]; then
-  echo "==> AUTH_SECRET not set — app will derive a stable secret from DATABASE_URL"
+  if [ -n "$DATABASE_URL" ]; then
+    export AUTH_SECRET="$(node -e "const c=require('crypto');process.stdout.write(c.createHash('sha256').update('edubridge-jwt-v1:'+process.env.DATABASE_URL).digest('base64'))")"
+    echo "==> AUTH_SECRET derived from DATABASE_URL for edge middleware compatibility"
+  else
+    echo "==> WARNING: AUTH_SECRET not set and DATABASE_URL missing"
+  fi
 else
   echo "==> AUTH_SECRET is configured"
 fi

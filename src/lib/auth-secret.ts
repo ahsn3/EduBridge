@@ -10,6 +10,15 @@ function deriveSecretFromDatabase(): string | undefined {
   return createHash("sha256").update(`edubridge-jwt-v1:${dbUrl}`).digest("base64");
 }
 
+/** Edge-safe secret for middleware — never uses Node-only crypto APIs. */
+export function getMiddlewareAuthSecret(): string {
+  return (
+    process.env.AUTH_SECRET ??
+    process.env.NEXTAUTH_SECRET ??
+    "dev-local-auth-secret-edubridge"
+  );
+}
+
 export function getAuthSecret(): string {
   const explicit = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
   if (explicit) return explicit;
