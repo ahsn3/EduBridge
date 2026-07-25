@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 const ADMINS = [
   {
-    email: "ahmed@edubridge.com",
+    email: "ahmed@admin.com",
     password: "Ahmed123",
     name: "Ahmed Admin",
     nameAr: "أحمد - مدير",
@@ -12,7 +12,7 @@ const ADMINS = [
     referralCode: "ADM001",
   },
   {
-    email: "draz@edubridge.com",
+    email: "draz@admin.com",
     password: "Draz123",
     name: "Draz Admin",
     nameAr: "دراز - مدير",

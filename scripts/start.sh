@@ -33,7 +33,7 @@ if [ -n "$DATABASE_URL" ]; then
 
   echo "==> Creating admin accounts..."
   if node scripts/ensure-admins.cjs; then
-    echo "==> Default accounts ready (ahmed@edubridge.com / Ahmed123)"
+    echo "==> Default accounts ready (ahmed@admin.com / Ahmed123)"
   else
     echo "==> WARNING: admin bootstrap failed"
   fi

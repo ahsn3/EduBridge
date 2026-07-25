@@ -13,7 +13,7 @@ async function main() {
   const password = await bcrypt.hash("password123", 12);
 
   await prisma.user.upsert({
-    where: { email: "ahmed@edubridge.com" },
+    where: { email: "ahmed@admin.com" },
     update: {
       status: "ACTIVE",
       role: "ADMIN",
@@ -24,7 +24,7 @@ async function main() {
       name: "Ahmed Admin",
       nameAr: "أحمد - مدير",
       nameEn: "Ahmed Admin",
-      email: "ahmed@edubridge.com",
+      email: "ahmed@admin.com",
       password: ahmedAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
@@ -35,7 +35,7 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "draz@edubridge.com" },
+    where: { email: "draz@admin.com" },
     update: {
       status: "ACTIVE",
       role: "ADMIN",
@@ -46,7 +46,7 @@ async function main() {
       name: "Draz Admin",
       nameAr: "دراز - مدير",
       nameEn: "Draz Admin",
-      email: "draz@edubridge.com",
+      email: "draz@admin.com",
       password: drazAdminPassword,
       role: "ADMIN",
       status: "ACTIVE",
@@ -706,8 +706,8 @@ async function main() {
   console.log("✅ Seed completed!");
   console.log("\n📧 Default Accounts:");
   console.log("  Managers:");
-  console.log("    ahmed@edubridge.com  / Ahmed123");
-  console.log("    draz@edubridge.com   / Draz123");
+  console.log("    ahmed@admin.com  / Ahmed123");
+  console.log("    draz@admin.com   / Draz123");
   console.log("  Student:");
   console.log("    student@edubridge.com / Student123");
   console.log("  Instructor:");

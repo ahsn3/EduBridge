@@ -1,6 +1,6 @@
 export const ADMIN_EMAILS = new Set([
-  "ahmed@edubridge.com",
-  "draz@edubridge.com",
+  "ahmed@admin.com",
+  "draz@admin.com",
 ]);
 
 export function isAdminEmail(email: string | null | undefined): boolean {
